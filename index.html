@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>流量王 PK 数据看板</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Rubik:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #150f23;
+            --surface: #1f1633;
+            --surface-2: #251a3d;
+            --line: rgba(255, 255, 255, 0.09);
+            --line-soft: rgba(255, 255, 255, 0.055);
+            --text: #f7f3fb;
+            --muted: #bdb8c0;
+            --faint: rgba(189, 184, 192, 0.68);
+            --lime: #c2ef4e;
+            --pink: #fa7faa;
+            --red: #ff2d55;
+            --blue: #5ac8fa;
+            --red-soft: rgba(255, 45, 85, 0.22);
+            --blue-soft: rgba(90, 200, 250, 0.2);
+            --content: 1260px;
+            --red-share: 50%;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body { min-height: 100%; }
+
+        body {
+            margin: 0;
+            font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(180deg, #171025 0%, var(--bg) 42%, #100b1a 100%);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        .page {
+            min-height: 100vh;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .topbar,
+        .analysis-grid,
+        .footer {
+            width: min(var(--content), 100%);
+            margin: 0 auto;
+        }
+
+        .topbar {
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(31, 22, 51, 0.72);
+            backdrop-filter: blur(18px);
+            padding: 0 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, var(--pink), var(--lime));
+            color: #17101f;
+            font: 800 13px/1 "Rubik", sans-serif;
+        }
+
+        .brand-title {
+            font: 700 15px/1 "Rubik", "Noto Sans SC", sans-serif;
+            white-space: nowrap;
+        }
+
+        .top-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--faint);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .live-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            height: 24px;
+            padding: 0 9px;
+            border-radius: 6px;
+            border: 1px solid rgba(194, 239, 78, 0.22);
+            background: rgba(194, 239, 78, 0.1);
+            color: var(--lime);
+            font: 700 11px/1 "Rubik", sans-serif;
+        }
+
+        .live-chip::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--lime);
+            box-shadow: 0 0 12px rgba(194, 239, 78, 0.7);
+        }
+
+        .hero-area {
+            width: 100%;
+            padding: 0;
+        }
+
+        .hero-band {
+            position: relative;
+            width: min(var(--content), 100%);
+            aspect-ratio: 32 / 9;
+            min-height: 338px;
+            max-height: 420px;
+            margin: 0 auto;
+            overflow: hidden;
+            border-radius: 8px;
+            isolation: isolate;
+        }
+
+        .hero-band::before,
+        .hero-band::after {
+            content: "";
+            position: absolute;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .hero-band::before {
+            inset: 0;
+            box-shadow:
+                inset 0 0 68px 48px rgba(21, 15, 35, 0.94),
+                inset 0 -110px 90px rgba(21, 15, 35, 0.96);
+        }
+
+        .hero-band::after {
+            top: -10%;
+            bottom: -10%;
+            left: 50%;
+            width: 22%;
+            transform: translateX(-50%);
+            background: rgba(21, 15, 35, 0.72);
+            filter: blur(34px);
+        }
+
+        .cover-layer {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            z-index: -3;
+        }
+
+        .cover-cell {
+            position: relative;
+            overflow: hidden;
+            background: #120c1d;
+        }
+
+        .cover-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: saturate(1.08) contrast(1.04) brightness(0.72);
+            transform: scale(1.005);
+        }
+
+        .cover-cell::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .cover-cell.red::after {
+            background:
+                linear-gradient(90deg, rgba(255, 45, 85, 0.34), rgba(21, 15, 35, 0.14) 44%, rgba(21, 15, 35, 0.82));
+        }
+
+        .cover-cell.blue::after {
+            background:
+                linear-gradient(270deg, rgba(90, 200, 250, 0.32), rgba(21, 15, 35, 0.14) 44%, rgba(21, 15, 35, 0.82));
+        }
+
+        .hero-content {
+            height: 100%;
+            padding: 22px 24px 20px;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 14px;
+        }
+
+        .hero-top,
+        .scoreboard,
+        .pk-action-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            align-items: center;
+            gap: 18px;
+        }
+
+        .badge {
+            justify-self: center;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 7px;
+            border: 1px solid rgba(194, 239, 78, 0.24);
+            background: rgba(194, 239, 78, 0.08);
+            color: var(--lime);
+            padding: 0 12px;
+            font: 700 12px/1 "Rubik", "Noto Sans SC", sans-serif;
+        }
+
+        .avatar-stack {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .avatar-stack.right { justify-content: flex-end; }
+
+        .avatar-chip {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.72);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+        }
+
+        .avatar-chip + .avatar-chip { margin-left: -10px; }
+        .avatar-stack.red .avatar-chip { border-color: rgba(255, 45, 85, 0.82); }
+        .avatar-stack.blue .avatar-chip { border-color: rgba(90, 200, 250, 0.82); }
+
+        .scoreboard {
+            align-self: center;
+        }
+
+        .score-side {
+            min-width: 0;
+        }
+
+        .score-side.right {
+            text-align: right;
+        }
+
+        .up-name {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .score-number {
+            font: 800 clamp(44px, 6vw, 84px)/0.92 "Rubik", "Noto Sans SC", sans-serif;
+            white-space: nowrap;
+            letter-spacing: 0;
+        }
+
+        .score-number.red {
+            color: var(--red);
+            text-shadow: 0 0 34px rgba(255, 45, 85, 0.28);
+        }
+
+        .score-number.blue {
+            color: var(--blue);
+            text-shadow: 0 0 34px rgba(90, 200, 250, 0.28);
+        }
+
+        .score-sub {
+            color: var(--faint);
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .title-lockup {
+            display: grid;
+            justify-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        .title-lockup h1 {
+            margin: 0;
+            font-size: clamp(24px, 3.1vw, 46px);
+            line-height: 0.98;
+            font-weight: 900;
+            white-space: nowrap;
+            letter-spacing: 0;
+        }
+
+        .diff-chip {
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 6px;
+            background: rgba(31, 22, 51, 0.58);
+            color: var(--lime);
+            padding: 0 10px;
+            font: 700 12px/1 "Rubik", "Noto Sans SC", sans-serif;
+            backdrop-filter: blur(12px);
+        }
+
+        .pk-block {
+            min-width: min(620px, 100%);
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 8px;
+            background: rgba(21, 15, 35, 0.58);
+            backdrop-filter: blur(18px);
+            padding: 12px 14px;
+            box-shadow: 0 18px 54px rgba(0, 0, 0, 0.28);
+        }
+
+        .pk-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .pk-percent {
+            font: 700 13px/1 "Rubik", sans-serif;
+        }
+
+        .pk-percent.red { color: var(--red); }
+        .pk-percent.blue { color: var(--blue); }
+
+        .pk-track {
+            position: relative;
+            height: 18px;
+            overflow: hidden;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background:
+                linear-gradient(90deg, var(--red) 0 var(--red-share), var(--blue) var(--red-share) 100%);
+        }
+
+        .pk-track::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 62%);
+        }
+
+        .pk-tick {
+            position: absolute;
+            top: -8px;
+            bottom: -8px;
+            left: var(--red-share);
+            width: 3px;
+            transform: translateX(-50%);
+            border-radius: 4px;
+            background: var(--lime);
+            box-shadow: 0 0 18px rgba(194, 239, 78, 0.82);
+        }
+
+        .watch-link {
+            height: 36px;
+            min-width: 112px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.085);
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 800;
+            backdrop-filter: blur(12px);
+        }
+
+        .watch-link.red {
+            justify-self: start;
+        }
+
+        .watch-link.blue {
+            justify-self: end;
+        }
+
+        .watch-link.red:hover {
+            border-color: rgba(255, 45, 85, 0.62);
+            background: rgba(255, 45, 85, 0.17);
+        }
+
+        .watch-link.blue:hover {
+            border-color: rgba(90, 200, 250, 0.62);
+            background: rgba(90, 200, 250, 0.15);
+        }
+
+        .quick-stats {
+            width: min(var(--content), 100%);
+            margin: -4px auto 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .mini-stat {
+            min-height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border: 1px solid var(--line-soft);
+            border-radius: 8px;
+            background: rgba(31, 22, 51, 0.56);
+            padding: 10px 12px;
+        }
+
+        .mini-stat span {
+            color: var(--faint);
+            font-size: 11px;
+        }
+
+        .mini-stat strong {
+            font: 700 18px/1 "Rubik", "Noto Sans SC", sans-serif;
+            white-space: nowrap;
+        }
+
+        .analysis-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 14px;
+            min-height: 390px;
+        }
+
+        .panel {
+            min-height: 390px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(31, 22, 51, 0.74);
+            padding: 16px;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .panel-title {
+            display: grid;
+            gap: 5px;
+        }
+
+        .panel-title h2 {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .panel-title span {
+            color: var(--faint);
+            font-size: 11px;
+        }
+
+        .panel-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .strip-item {
+            min-width: 0;
+            border: 1px solid var(--line-soft);
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.035);
+            padding: 8px 9px;
+        }
+
+        .strip-item span {
+            display: block;
+            color: var(--faint);
+            font-size: 10px;
+            margin-bottom: 5px;
+        }
+
+        .strip-item strong {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font: 700 14px/1 "Rubik", "Noto Sans SC", sans-serif;
+        }
+
+        .chart {
+            flex: 1;
+            min-height: 260px;
+        }
+
+        .metric-chart {
+            flex: 1;
+            min-height: 260px;
+            display: grid;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            padding-top: 2px;
+        }
+
+        .metric-row {
+            display: grid;
+            grid-template-columns: 36px minmax(0, 1fr);
+            align-items: center;
+            gap: 12px;
+            min-height: 56px;
+        }
+
+        .metric-icon {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background: rgba(255, 255, 255, 0.035);
+            color: rgba(194, 239, 78, 0.88);
+        }
+
+        .metric-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke-width: 1.8;
+        }
+
+        .metric-bars {
+            display: grid;
+            gap: 7px;
+            min-width: 0;
+        }
+
+        .metric-bar-line {
+            --pct: 0%;
+            position: relative;
+            height: 23px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.045);
+            overflow: visible;
+        }
+
+        .metric-fill {
+            width: var(--pct);
+            height: 100%;
+            min-width: 26px;
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .metric-fill.red {
+            background: linear-gradient(90deg, rgba(255, 45, 85, 0.32), var(--red));
+            box-shadow: 0 0 18px rgba(255, 45, 85, 0.18);
+        }
+
+        .metric-fill.blue {
+            background: linear-gradient(90deg, rgba(90, 200, 250, 0.28), var(--blue));
+            box-shadow: 0 0 18px rgba(90, 200, 250, 0.16);
+        }
+
+        .metric-tip {
+            position: absolute;
+            top: 50%;
+            left: min(var(--pct), calc(100% - 72px));
+            transform: translate(8px, -50%);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text);
+            font: 700 11px/1 "Rubik", "Noto Sans SC", sans-serif;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .metric-tip img {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.74);
+            background: var(--surface-2);
+        }
+
+        .metric-bar-line.red-line .metric-tip img { border-color: var(--red); }
+        .metric-bar-line.blue-line .metric-tip img { border-color: var(--blue); }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            color: var(--faint);
+            font-size: 11px;
+            padding: 0 3px;
+        }
+
+        @media (max-width: 980px) {
+            .page { padding: 14px; }
+            .hero-band {
+                min-height: 430px;
+                aspect-ratio: auto;
+            }
+            .hero-content {
+                padding: 20px 18px;
+            }
+            .scoreboard,
+            .pk-action-row {
+                grid-template-columns: 1fr;
+                justify-items: stretch;
+                text-align: left;
+            }
+            .score-side.right {
+                text-align: left;
+            }
+            .title-lockup {
+                justify-items: start;
+                text-align: left;
+            }
+            .title-lockup h1 {
+                white-space: normal;
+            }
+            .pk-block {
+                width: 100%;
+                min-width: 0;
+                order: -1;
+            }
+            .watch-link.red,
+            .watch-link.blue {
+                justify-self: stretch;
+            }
+            .quick-stats,
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                padding: 10px;
+                gap: 12px;
+            }
+            .topbar {
+                min-height: 48px;
+                flex-wrap: wrap;
+                padding: 10px;
+            }
+            .top-meta {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .hero-area {
+                width: 100vw;
+                margin-left: calc(50% - 50vw);
+                margin-right: calc(50% - 50vw);
+            }
+            .hero-band {
+                width: 100%;
+                min-height: 560px;
+                border-radius: 0;
+            }
+            .cover-layer {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+            }
+            .hero-band::after {
+                top: 32%;
+                bottom: 32%;
+                left: -8%;
+                right: -8%;
+                width: auto;
+                transform: none;
+                filter: blur(28px);
+            }
+            .hero-content {
+                padding: 18px 12px;
+                gap: 12px;
+            }
+            .hero-top {
+                grid-template-columns: 1fr auto 1fr;
+                gap: 8px;
+            }
+            .avatar-chip {
+                width: 34px;
+                height: 34px;
+            }
+            .avatar-chip + .avatar-chip {
+                margin-left: -8px;
+            }
+            .score-number {
+                font-size: 44px;
+            }
+            .quick-stats {
+                gap: 8px;
+            }
+            .mini-stat {
+                min-height: 48px;
+                padding: 9px;
+            }
+            .mini-stat strong {
+                font-size: 15px;
+            }
+            .panel {
+                min-height: 360px;
+                padding: 13px;
+            }
+            .panel-strip {
+                grid-template-columns: 1fr;
+            }
+            .metric-row {
+                grid-template-columns: 32px minmax(0, 1fr);
+                gap: 9px;
+            }
+            .metric-icon {
+                width: 30px;
+                height: 30px;
+            }
+            .metric-tip {
+                gap: 4px;
+                font-size: 10px;
+                left: min(var(--pct), calc(100% - 58px));
+            }
+            .metric-tip img {
+                width: 20px;
+                height: 20px;
+            }
+            .footer {
+                flex-direction: column;
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark">PK</div>
+                <div class="brand-title">Bilibili PK Tracker</div>
+            </div>
+            <div class="top-meta">
+                <span class="live-chip">LIVE</span>
+                <span id="topTime">等待数据</span>
+                <span id="dataPoints">-- 个数据点</span>
+            </div>
+        </header>
+
+        <main>
+            <section class="hero-area" aria-label="流量王 PK 主视觉">
+                <div class="hero-band">
+                    <div class="cover-layer" aria-hidden="true">
+                        <div class="cover-cell red"><img src="assets/red-cover.jpg" alt=""></div>
+                        <div class="cover-cell blue"><img src="assets/blue-cover.jpg" alt=""></div>
+                    </div>
+
+                    <div class="hero-content">
+                        <div class="hero-top">
+                            <div class="avatar-stack red" aria-label="红方头像">
+                                <img class="avatar-chip" src="assets/red-avatar.jpg" alt="">
+                                <img class="avatar-chip" src="assets/red-avatar.jpg" alt="">
+                                <img class="avatar-chip" src="assets/red-avatar.jpg" alt="">
+                            </div>
+                            <div class="badge">流量王 01</div>
+                            <div class="avatar-stack blue right" aria-label="蓝方头像">
+                                <img class="avatar-chip" src="assets/blue-avatar.jpg" alt="">
+                                <img class="avatar-chip" src="assets/blue-avatar.jpg" alt="">
+                                <img class="avatar-chip" src="assets/blue-avatar.jpg" alt="">
+                            </div>
+                        </div>
+
+                        <div class="scoreboard">
+                            <div class="score-side">
+                                <div class="up-name" id="redUpName">徐大虾咯</div>
+                                <div class="score-number red" id="redViews">--</div>
+                                <div class="score-sub" id="redGain">采集中</div>
+                            </div>
+                            <div class="title-lockup">
+                                <h1>大虾队 VS 雨哥队</h1>
+                                <div class="diff-chip" id="viewDiff">差距 --</div>
+                            </div>
+                            <div class="score-side right">
+                                <div class="up-name" id="blueUpName">雨哥到处跑</div>
+                                <div class="score-number blue" id="blueViews">--</div>
+                                <div class="score-sub" id="blueGain">采集中</div>
+                            </div>
+                        </div>
+
+                        <div class="pk-action-row">
+                            <a class="watch-link red" href="https://www.bilibili.com/video/BV1zgTn6rEsh" target="_blank" rel="noreferrer">去看视频</a>
+                            <div class="pk-block">
+                                <div class="pk-head">
+                                    <span class="pk-percent red" id="redShareLabel">--</span>
+                                    <span>播放量占比</span>
+                                    <span class="pk-percent blue" id="blueShareLabel">--</span>
+                                </div>
+                                <div class="pk-track">
+                                    <span class="pk-tick"></span>
+                                </div>
+                            </div>
+                            <a class="watch-link blue" href="https://www.bilibili.com/video/BV1UUTJ6dErS" target="_blank" rel="noreferrer">去看视频</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="quick-stats" aria-label="实时概览">
+                <div class="mini-stat"><span>领先方</span><strong id="leader">--</strong></div>
+                <div class="mini-stat"><span>总播放</span><strong id="totalViews">--</strong></div>
+                <div class="mini-stat"><span>刷新</span><strong id="refreshTime">--</strong></div>
+            </section>
+
+            <section class="analysis-grid" aria-label="PK 数据分析">
+                <section class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            <h2>播放趋势</h2>
+                            <span>纵轴从 0 起，头像标记最新端点</span>
+                        </div>
+                    </div>
+                    <div class="panel-strip">
+                        <div class="strip-item"><span>当前差距</span><strong id="sideDiff">--</strong></div>
+                        <div class="strip-item"><span>红方增量</span><strong id="sideRedGain">--</strong></div>
+                        <div class="strip-item"><span>蓝方增量</span><strong id="sideBlueGain">--</strong></div>
+                    </div>
+                    <div id="viewChart" class="chart"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            <h2>互动对比</h2>
+                            <span>同图并列柱，头像贴在每根柱子末端</span>
+                        </div>
+                    </div>
+                    <div class="panel-strip">
+                        <div class="strip-item"><span>点赞领先</span><strong id="likeLead">--</strong></div>
+                        <div class="strip-item"><span>投币领先</span><strong id="coinLead">--</strong></div>
+                        <div class="strip-item"><span>收藏领先</span><strong id="favLead">--</strong></div>
+                    </div>
+                    <div id="engagementChart" class="metric-chart" aria-label="点赞、收藏、转发、投币互动对比"></div>
+                </section>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <span>数据来源：B 站公开 API，每 30 分钟自动采集</span>
+            <span id="footerTime">--</span>
+        </footer>
+    </div>
+
+    <script>
+        const DATA_URL = './data.json';
+        const RED = '#ff2d55';
+        const BLUE = '#5ac8fa';
+        let viewChart;
+
+        function fmt(n) {
+            if (n == null || Number.isNaN(n)) return '--';
+            if (Math.abs(n) >= 10000) return (n / 10000).toFixed(1) + '万';
+            return n.toLocaleString('zh-CN');
+        }
+
+        function fmtSigned(n) {
+            if (n == null || Number.isNaN(n)) return '--';
+            return (n > 0 ? '+' : '') + fmt(n);
+        }
+
+        function fmtTime(iso) {
+            const d = new Date(iso);
+            if (Number.isNaN(d.getTime())) return '--';
+            return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function fmtDateTime(iso) {
+            const d = new Date(iso);
+            if (Number.isNaN(d.getTime())) return '--';
+            return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function pct(part, total) {
+            if (!total) return 50;
+            return Math.max(0, Math.min(100, part / total * 100));
+        }
+
+        function leadText(redValue, blueValue) {
+            if ((redValue || 0) === (blueValue || 0)) return '持平';
+            return (redValue || 0) > (blueValue || 0) ? '红方' : '蓝方';
+        }
+
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
+
+        async function loadData() {
+            let data;
+            try {
+                const response = await fetch(DATA_URL + '?t=' + Date.now());
+                data = await response.json();
+            } catch (error) {
+                setText('topTime', '数据加载失败');
+                return;
+            }
+
+            const snaps = data.snapshots || [];
+            if (!snaps.length) return;
+
+            const latest = snaps[snaps.length - 1];
+            const first = snaps[0];
+            const redLatest = latest.videos['红队'] || {};
+            const blueLatest = latest.videos['蓝队'] || {};
+            const redFirst = first.videos['红队'] || {};
+            const blueFirst = first.videos['蓝队'] || {};
+
+            const redViews = redLatest.view || 0;
+            const blueViews = blueLatest.view || 0;
+            const totalViews = redViews + blueViews;
+            const redShare = pct(redViews, totalViews);
+            const blueShare = 100 - redShare;
+            const diff = redViews - blueViews;
+            const redGain = redViews - (redFirst.view || redViews);
+            const blueGain = blueViews - (blueFirst.view || blueViews);
+
+            document.documentElement.style.setProperty('--red-share', redShare.toFixed(2) + '%');
+            setText('topTime', `${fmtDateTime(latest.time)} 更新`);
+            setText('footerTime', `最新快照：${latest.time}`);
+            setText('dataPoints', `${snaps.length} 个数据点`);
+            setText('redViews', fmt(redViews));
+            setText('blueViews', fmt(blueViews));
+            setText('redGain', `采集后 ${fmtSigned(redGain)}`);
+            setText('blueGain', `采集后 ${fmtSigned(blueGain)}`);
+            setText('viewDiff', `差距 ${fmt(Math.abs(diff))}`);
+            setText('sideDiff', fmt(Math.abs(diff)));
+            setText('totalViews', fmt(totalViews));
+            setText('refreshTime', fmtTime(latest.time));
+            setText('leader', diff >= 0 ? '红方' : '蓝方');
+            setText('redShareLabel', `${redShare.toFixed(1)}%`);
+            setText('blueShareLabel', `${blueShare.toFixed(1)}%`);
+            setText('sideRedGain', fmtSigned(redGain));
+            setText('sideBlueGain', fmtSigned(blueGain));
+            setText('likeLead', leadText(redLatest.like, blueLatest.like));
+            setText('coinLead', leadText(redLatest.coin, blueLatest.coin));
+            setText('favLead', leadText(redLatest.favorite, blueLatest.favorite));
+
+            const times = snaps.map(s => fmtDateTime(s.time));
+            const redSeries = snaps.map(s => (s.videos['红队'] || {}).view || 0);
+            const blueSeries = snaps.map(s => (s.videos['蓝队'] || {}).view || 0);
+
+            renderViewChart(times, redSeries, blueSeries);
+            renderEngagementChart(redLatest, blueLatest);
+        }
+
+        function renderViewChart(times, redSeries, blueSeries) {
+            const el = document.getElementById('viewChart');
+            if (!viewChart) viewChart = echarts.init(el);
+            const lastIndex = Math.max(0, times.length - 1);
+
+            viewChart.setOption({
+                animationDuration: 520,
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(21, 15, 35, 0.96)',
+                    borderColor: 'rgba(255,255,255,0.12)',
+                    textStyle: { color: '#f7f3fb', fontFamily: 'Noto Sans SC' },
+                    formatter: params => {
+                        const rows = params.map(p => `${p.marker}${p.seriesName} <b style="float:right;margin-left:18px">${fmt(p.value)}</b>`).join('<br>');
+                        return `<strong>${params[0].axisValue}</strong><br>${rows}`;
+                    }
+                },
+                grid: { left: 54, right: 70, top: 14, bottom: 28 },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: times,
+                    axisLabel: { color: 'rgba(189,184,192,0.72)', fontSize: 10, hideOverlap: true },
+                    axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
+                    axisTick: { show: false }
+                },
+                yAxis: {
+                    type: 'value',
+                    min: 0,
+                    scale: false,
+                    splitNumber: 4,
+                    axisLabel: { color: 'rgba(189,184,192,0.72)', fontSize: 10, formatter: value => fmt(value) },
+                    axisLine: { show: false },
+                    axisTick: { show: false },
+                    splitLine: { lineStyle: { color: 'rgba(255,255,255,0.055)' } }
+                },
+                series: [
+                    {
+                        name: '红方',
+                        type: 'line',
+                        data: redSeries,
+                        smooth: true,
+                        showSymbol: false,
+                        lineStyle: { color: RED, width: 3 },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(255,45,85,0.2)' },
+                                { offset: 1, color: 'rgba(255,45,85,0)' }
+                            ])
+                        },
+                        markPoint: {
+                            symbol: 'image://assets/red-avatar.jpg',
+                            symbolSize: 30,
+                            symbolOffset: [18, 0],
+                            label: { show: false },
+                            data: [{ coord: [times[lastIndex], redSeries[lastIndex]] }]
+                        }
+                    },
+                    {
+                        name: '蓝方',
+                        type: 'line',
+                        data: blueSeries,
+                        smooth: true,
+                        showSymbol: false,
+                        lineStyle: { color: BLUE, width: 3 },
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(90,200,250,0.2)' },
+                                { offset: 1, color: 'rgba(90,200,250,0)' }
+                            ])
+                        },
+                        markPoint: {
+                            symbol: 'image://assets/blue-avatar.jpg',
+                            symbolSize: 30,
+                            symbolOffset: [18, 0],
+                            label: { show: false },
+                            data: [{ coord: [times[lastIndex], blueSeries[lastIndex]] }]
+                        }
+                    }
+                ]
+            });
+        }
+
+        function renderEngagementChart(redData, blueData) {
+            const el = document.getElementById('engagementChart');
+            const metrics = [
+                { key: 'like', label: '点赞', icon: 'thumbs-up', red: redData.like || 0, blue: blueData.like || 0 },
+                { key: 'favorite', label: '收藏', icon: 'star', red: redData.favorite || 0, blue: blueData.favorite || 0 },
+                { key: 'share', label: '转发', icon: 'send', red: redData.share || 0, blue: blueData.share || 0 },
+                { key: 'coin', label: '投币', icon: 'coins', red: redData.coin || 0, blue: blueData.coin || 0 }
+            ];
+            const maxValue = Math.max(...metrics.flatMap(metric => [metric.red, metric.blue]), 1);
+
+            el.innerHTML = metrics.map(metric => {
+                const redPct = Math.max(8, metric.red / maxValue * 100);
+                const bluePct = Math.max(8, metric.blue / maxValue * 100);
+                return `
+                    <div class="metric-row" aria-label="${metric.label}">
+                        <div class="metric-icon" title="${metric.label}" aria-hidden="true">
+                            <i data-lucide="${metric.icon}"></i>
+                        </div>
+                        <div class="metric-bars">
+                            ${metricBar('red', redPct, metric.red, 'assets/red-avatar.jpg')}
+                            ${metricBar('blue', bluePct, metric.blue, 'assets/blue-avatar.jpg')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+
+        function metricBar(side, pctValue, value, avatar) {
+            const cls = side === 'red' ? 'red-line' : 'blue-line';
+            return `
+                <div class="metric-bar-line ${cls}" style="--pct:${pctValue.toFixed(2)}%">
+                    <div class="metric-fill ${side}"></div>
+                    <div class="metric-tip">
+                        <span>${fmt(value)}</span>
+                        <img src="${avatar}" alt="">
+                    </div>
+                </div>
+            `;
+        }
+
+        window.addEventListener('resize', () => {
+            if (viewChart) viewChart.resize();
+        });
+
+        loadData();
+        setInterval(loadData, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
