@@ -628,8 +628,11 @@
                 linear-gradient(90deg,
                     rgba(255, 45, 85, 0) 0%,
                     rgba(255, 45, 85, 0.18) 7%,
-                    rgba(255, 45, 85, 0.46) calc(var(--red-share) - 1px),
-                    rgba(90, 200, 250, 0.46) calc(var(--red-share) + 1px),
+                    rgba(255, 45, 85, 0.46) calc(var(--red-share) - 12px),
+                    rgba(244, 240, 232, 0.62) calc(var(--red-share) - 1px),
+                    rgba(244, 240, 232, 0.72) var(--red-share),
+                    rgba(244, 240, 232, 0.62) calc(var(--red-share) + 1px),
+                    rgba(90, 200, 250, 0.46) calc(var(--red-share) + 12px),
                     rgba(90, 200, 250, 0.18) 93%,
                     rgba(90, 200, 250, 0) 100%);
             backdrop-filter: blur(6px);
@@ -642,16 +645,105 @@
 
         .pk-tick {
             position: absolute;
-            top: 0;
-            bottom: 0;
+            top: -8px;
+            bottom: -8px;
             left: var(--red-share);
-            width: 4px;
+            width: 64px;
             z-index: 2;
             transform: translateX(-50%);
-            border-radius: 4px;
-            background: rgba(220, 224, 230, 0.82);
+            border-radius: 999px;
+            pointer-events: none;
+            isolation: isolate;
+            mix-blend-mode: screen;
+        }
+
+        .pk-tick::before,
+        .pk-tick::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            border-radius: inherit;
+            pointer-events: none;
+            will-change: opacity, transform;
+        }
+
+        .pk-tick::before {
+            top: 8px;
+            bottom: 8px;
+            width: 8px;
+            transform: translateX(-50%);
+            background:
+                linear-gradient(90deg,
+                    rgba(255, 45, 85, 0.7) 0%,
+                    rgba(244, 240, 232, 0.98) 34%,
+                    #fff 50%,
+                    rgba(244, 240, 232, 0.98) 66%,
+                    rgba(90, 200, 250, 0.7) 100%);
             box-shadow:
-                0 0 10px rgba(220, 224, 230, 0.36);
+                -12px 0 24px rgba(255, 45, 85, 0.38),
+                12px 0 24px rgba(90, 200, 250, 0.38),
+                0 0 16px rgba(244, 240, 232, 0.72);
+            animation: pkCoreBreathe 2.4s ease-in-out infinite;
+        }
+
+        .pk-tick::after {
+            top: 5px;
+            bottom: 5px;
+            width: 64px;
+            z-index: -1;
+            transform: translateX(-50%) scaleX(0.68);
+            opacity: 0.58;
+            background:
+                radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.9) 0%, rgba(244, 240, 232, 0.44) 18%, transparent 38%),
+                linear-gradient(90deg,
+                    rgba(255, 45, 85, 0) 0%,
+                    rgba(255, 45, 85, 0.58) 28%,
+                    rgba(255, 255, 255, 0.82) 48%,
+                    rgba(255, 255, 255, 0.9) 50%,
+                    rgba(255, 255, 255, 0.82) 52%,
+                    rgba(90, 200, 250, 0.58) 72%,
+                    rgba(90, 200, 250, 0) 100%);
+            filter: blur(7px);
+            animation: pkGlowBreathe 2.4s ease-in-out infinite;
+        }
+
+        @keyframes pkGlowBreathe {
+            0%, 100% {
+                opacity: 0.5;
+                transform: translateX(-50%) scaleX(0.68);
+            }
+            50% {
+                opacity: 1;
+                transform: translateX(-50%) scaleX(1);
+            }
+        }
+
+        @keyframes pkCoreBreathe {
+            0%, 100% {
+                opacity: 0.76;
+                transform: translateX(-50%) scaleY(0.86);
+            }
+            50% {
+                opacity: 1;
+                transform: translateX(-50%) scaleY(1);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .pk-tick::before,
+            .pk-tick::after {
+                animation: none;
+            }
+
+            .pk-tick::before {
+                opacity: 0.9;
+                transform: translateX(-50%);
+            }
+
+            .pk-tick::after {
+                opacity: 0.72;
+                transform: translateX(-50%) scaleX(0.86);
+            }
         }
 
         .watch-link {
