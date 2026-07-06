@@ -13,16 +13,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Rubik:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #150f23;
-            --surface: #1f1633;
-            --surface-2: #251a3d;
-            --line: rgba(255, 255, 255, 0.09);
-            --line-soft: rgba(255, 255, 255, 0.055);
-            --text: #f7f3fb;
-            --muted: #bdb8c0;
-            --faint: rgba(189, 184, 192, 0.68);
-            --lime: #c2ef4e;
-            --pink: #fa7faa;
+            --bg: #11110f;
+            --surface: #181713;
+            --surface-2: #201f1a;
+            --line: rgba(244, 240, 232, 0.13);
+            --line-soft: rgba(244, 240, 232, 0.07);
+            --text: #f4f0e8;
+            --muted: #a8a29a;
+            --faint: rgba(168, 162, 154, 0.72);
+            --lime: #e6c75f;
+            --pink: #e45a68;
             --red: #ff2d55;
             --blue: #5ac8fa;
             --red-soft: rgba(255, 45, 85, 0.22);
@@ -30,6 +30,8 @@
             --content: 1260px;
             --red-share: 50%;
             --hero-shelf-height: 196px;
+            --hero-cover-overlap: 48px;
+            --hero-image-tail-height: calc(var(--hero-shelf-height) - var(--hero-cover-overlap));
         }
 
         * { box-sizing: border-box; }
@@ -40,7 +42,7 @@
             margin: 0;
             font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             background:
-                linear-gradient(180deg, #171025 0%, var(--bg) 42%, #100b1a 100%);
+                linear-gradient(180deg, #141310 0%, var(--bg) 42%, #0c0b09 100%);
             color: var(--text);
             overflow-x: hidden;
         }
@@ -63,16 +65,16 @@
         }
 
         .topbar {
-            min-height: 48px;
+            min-height: 74px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
             gap: 16px;
             border: 1px solid var(--line);
             border-radius: 8px;
-            background: rgba(31, 22, 51, 0.72);
+            background: rgba(24, 23, 19, 0.78);
             backdrop-filter: blur(18px);
-            padding: 0 16px;
+            padding: 9px 16px;
         }
 
         .top-meta {
@@ -98,7 +100,7 @@
             border: 1px solid rgba(255, 255, 255, 0.11);
             border-radius: 6px;
             background: rgba(255, 255, 255, 0.045);
-            color: rgba(247, 243, 251, 0.78);
+            color: rgba(244, 240, 232, 0.78);
             padding: 0;
             cursor: pointer;
             transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
@@ -107,20 +109,82 @@
         .icon-action:hover,
         .icon-action.is-done {
             color: var(--lime);
-            border-color: rgba(194, 239, 78, 0.36);
-            background: rgba(194, 239, 78, 0.08);
+            border-color: rgba(230, 199, 95, 0.36);
+            background: rgba(230, 199, 95, 0.1);
         }
 
         .icon-action.is-error {
             color: var(--pink);
-            border-color: rgba(250, 127, 170, 0.38);
-            background: rgba(250, 127, 170, 0.08);
+            border-color: rgba(228, 90, 104, 0.38);
+            background: rgba(228, 90, 104, 0.1);
         }
 
         .icon-action svg {
             width: 15px;
             height: 15px;
             stroke-width: 2.2;
+        }
+
+        .live-qr-link {
+            min-height: 56px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 14px;
+            border-left: 1px solid var(--line);
+            color: var(--text);
+            outline: none;
+            transition: color 160ms ease, border-color 160ms ease;
+        }
+
+        .live-qr-link:hover,
+        .live-qr-link:focus-visible {
+            border-left-color: rgba(230, 199, 95, 0.4);
+        }
+
+        .live-qr-link:focus-visible {
+            border-radius: 6px;
+            box-shadow: 0 0 0 2px rgba(230, 199, 95, 0.38);
+        }
+
+        .live-qr-copy {
+            display: grid;
+            justify-items: end;
+            gap: 4px;
+            color: var(--faint);
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .live-qr-copy strong {
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 0;
+            transition: color 160ms ease;
+        }
+
+        .live-qr-link:hover .live-qr-copy strong,
+        .live-qr-link:focus-visible .live-qr-copy strong {
+            color: var(--lime);
+        }
+
+        .live-qr-code {
+            width: 56px;
+            height: 56px;
+            flex: 0 0 56px;
+            padding: 3px;
+            border-radius: 6px;
+            background: #fff;
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24);
+        }
+
+        .live-qr-code img {
+            display: block;
+            width: 100%;
+            height: 100%;
         }
 
         .hero-area {
@@ -152,13 +216,13 @@
             z-index: 2;
             background:
                 linear-gradient(180deg,
-                    rgba(21, 15, 35, 0) 0%,
-                    rgba(21, 15, 35, 0) 22%,
-                    rgba(21, 15, 35, 0.28) 35%,
-                    rgba(21, 15, 35, 0.78) 58%,
-                    rgba(21, 15, 35, 0.96) 76%,
-                    rgba(21, 15, 35, 1) 100%);
-            box-shadow: inset 0 0 64px 36px rgba(21, 15, 35, 0.58);
+                    rgba(17, 17, 15, 0) 0%,
+                    rgba(17, 17, 15, 0) 22%,
+                    rgba(17, 17, 15, 0.34) 35%,
+                    rgba(17, 17, 15, 0.8) 58%,
+                    rgba(17, 17, 15, 0.96) 76%,
+                    rgba(17, 17, 15, 1) 100%);
+            box-shadow: inset 0 0 64px 36px rgba(17, 17, 15, 0.6);
         }
 
         .hero-band::after {
@@ -168,7 +232,7 @@
             width: 17%;
             z-index: 3;
             transform: translateX(-50%);
-            background: rgba(21, 15, 35, 0.58);
+            background: rgba(17, 17, 15, 0.56);
             filter: blur(28px);
         }
 
@@ -176,7 +240,7 @@
             position: absolute;
             top: 0;
             right: 0;
-            bottom: var(--hero-shelf-height);
+            bottom: var(--hero-image-tail-height);
             left: 0;
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -186,7 +250,7 @@
         .cover-cell {
             position: relative;
             overflow: hidden;
-            background: #120c1d;
+            background: #11100d;
         }
 
         .cover-cell img {
@@ -207,12 +271,12 @@
 
         .cover-cell.red::after {
             background:
-                linear-gradient(90deg, rgba(255, 45, 85, 0.34), rgba(21, 15, 35, 0.14) 44%, rgba(21, 15, 35, 0.82));
+                linear-gradient(90deg, rgba(255, 45, 85, 0.34), rgba(17, 17, 15, 0.16) 44%, rgba(17, 17, 15, 0.82));
         }
 
         .cover-cell.blue::after {
             background:
-                linear-gradient(270deg, rgba(90, 200, 250, 0.32), rgba(21, 15, 35, 0.14) 44%, rgba(21, 15, 35, 0.82));
+                linear-gradient(270deg, rgba(90, 200, 250, 0.32), rgba(17, 17, 15, 0.16) 44%, rgba(17, 17, 15, 0.82));
         }
 
         .cover-blur-layer {
@@ -222,8 +286,8 @@
             grid-template-columns: 1fr 1fr;
             overflow: hidden;
             z-index: 1;
-            background: #120c1d;
-            clip-path: inset(calc(100% - var(--hero-shelf-height)) 0 0 0);
+            background: #11100d;
+            clip-path: inset(calc(100% - var(--hero-image-tail-height)) 0 0 0);
         }
 
         .cover-blur-cell {
@@ -234,10 +298,10 @@
         .cover-blur-cell img {
             position: absolute;
             top: auto;
-            bottom: var(--hero-shelf-height);
+            bottom: var(--hero-image-tail-height);
             left: 0;
             width: 100%;
-            height: calc(100% - var(--hero-shelf-height));
+            height: calc(100% - var(--hero-image-tail-height));
             object-fit: cover;
             object-position: center bottom;
             filter: saturate(1.08) contrast(1.04) brightness(0.84);
@@ -265,12 +329,12 @@
 
         .cover-blur-cell.red::after {
             background:
-                linear-gradient(90deg, rgba(255, 45, 85, 0.34), rgba(21, 15, 35, 0.14) 44%, rgba(21, 15, 35, 0.82));
+                linear-gradient(90deg, rgba(255, 45, 85, 0.34), rgba(17, 17, 15, 0.16) 44%, rgba(17, 17, 15, 0.82));
         }
 
         .cover-blur-cell.blue::after {
             background:
-                linear-gradient(270deg, rgba(90, 200, 250, 0.32), rgba(21, 15, 35, 0.14) 44%, rgba(21, 15, 35, 0.82));
+                linear-gradient(270deg, rgba(90, 200, 250, 0.32), rgba(17, 17, 15, 0.16) 44%, rgba(17, 17, 15, 0.82));
         }
 
         .hero-content {
@@ -358,6 +422,8 @@
 
         .scoreboard {
             align-self: center;
+            margin-bottom: calc(var(--hero-cover-overlap) * -0.35);
+            transform: translateY(calc(var(--hero-cover-overlap) * -0.58));
         }
 
         .score-side {
@@ -465,7 +531,7 @@
             align-items: center;
             border: 1px solid rgba(255, 255, 255, 0.13);
             border-radius: 6px;
-            background: rgba(31, 22, 51, 0.58);
+            background: rgba(24, 23, 19, 0.66);
             color: var(--lime);
             padding: 0 10px;
             font: 700 12px/1 "Rubik", "Noto Sans SC", sans-serif;
@@ -624,7 +690,7 @@
             overflow: hidden;
             border: 1px solid var(--line);
             border-radius: 8px;
-            background: rgba(31, 22, 51, 0.74);
+            background: rgba(24, 23, 19, 0.82);
             padding: 16px;
         }
 
@@ -674,7 +740,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            color: rgba(247, 243, 251, 0.82);
+            color: rgba(244, 240, 232, 0.84);
             font-size: 12px;
             font-weight: 800;
             white-space: nowrap;
@@ -689,7 +755,7 @@
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.09);
             background: rgba(255, 255, 255, 0.035);
-            color: rgba(194, 239, 78, 0.88);
+            color: rgba(230, 199, 95, 0.9);
         }
 
         .metric-icon svg {
@@ -761,6 +827,7 @@
             .page { padding: 14px; }
             .hero-band {
                 --hero-shelf-height: 190px;
+                --hero-cover-overlap: 40px;
                 min-height: 450px;
                 aspect-ratio: auto;
             }
@@ -815,19 +882,44 @@
                 gap: 8px;
             }
             .topbar {
-                min-height: 40px;
-                flex-wrap: wrap;
+                min-height: 56px;
+                flex-wrap: nowrap;
+                gap: 8px;
                 padding: 6px 8px;
             }
             .top-meta {
-                width: 100%;
+                width: auto;
+                flex: 1 1 auto;
+                min-width: 0;
                 justify-content: flex-end;
                 gap: 8px;
                 font-size: 11px;
             }
+            #topTime {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .top-actions {
+                flex: 0 0 auto;
+            }
             .icon-action {
                 width: 28px;
                 height: 28px;
+            }
+            .live-qr-link {
+                min-height: 44px;
+                gap: 0;
+                padding-left: 8px;
+            }
+            .live-qr-copy {
+                display: none;
+            }
+            .live-qr-code {
+                width: 42px;
+                height: 42px;
+                flex-basis: 42px;
+                padding: 2px;
             }
             .hero-area {
                 width: 100vw;
@@ -836,6 +928,7 @@
             }
             .hero-band {
                 --hero-shelf-height: 158px;
+                --hero-cover-overlap: 30px;
                 width: 100%;
                 min-height: 382px;
                 border-radius: 0;
@@ -1045,6 +1138,15 @@
                     </a>
                 </div>
             </div>
+            <a class="live-qr-link" href="https://jishi-calendar.cn/" target="_blank" rel="noreferrer" title="扫描或点击查看实时进度" aria-label="扫描或点击查看实时进度">
+                <span class="live-qr-copy" aria-hidden="true">
+                    <span>扫描查看</span>
+                    <strong>实时进度</strong>
+                </span>
+                <span class="live-qr-code" aria-hidden="true">
+                    <img src="assets/live-progress-qr.svg" width="56" height="56" alt="">
+                </span>
+            </a>
         </header>
 
         <main>
@@ -1267,7 +1369,7 @@
             try {
                 if (!window.html2canvas) throw new Error('html2canvas unavailable');
                 const canvas = await window.html2canvas(document.querySelector('.page'), {
-                    backgroundColor: '#150f23',
+                    backgroundColor: '#11110f',
                     scale: Math.min(window.devicePixelRatio || 1, 2),
                     useCORS: true
                 });
@@ -1492,9 +1594,9 @@
                 animationDuration: 520,
                 tooltip: {
                     trigger: 'axis',
-                    backgroundColor: 'rgba(21, 15, 35, 0.96)',
+                    backgroundColor: 'rgba(17, 17, 15, 0.96)',
                     borderColor: 'rgba(255,255,255,0.12)',
-                    textStyle: { color: '#f7f3fb', fontFamily: 'Noto Sans SC' },
+                    textStyle: { color: '#f4f0e8', fontFamily: 'Noto Sans SC' },
                     formatter: params => {
                         const rows = params.map(p => `${p.marker}${p.seriesName} <b style="float:right;margin-left:18px">${fmt(p.value)}</b>`).join('<br>');
                         return `<strong>${params[0].axisValue}</strong><br>${rows}`;
@@ -1505,7 +1607,7 @@
                     type: 'category',
                     boundaryGap: false,
                     data: times,
-                    axisLabel: { color: 'rgba(189,184,192,0.72)', fontSize: 10, hideOverlap: true },
+                    axisLabel: { color: 'rgba(168,162,154,0.72)', fontSize: 10, hideOverlap: true },
                     axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
                     axisTick: { show: false }
                 },
@@ -1514,7 +1616,7 @@
                     min: 0,
                     scale: false,
                     splitNumber: 4,
-                    axisLabel: { color: 'rgba(189,184,192,0.72)', fontSize: 10, formatter: value => fmt(value) },
+                    axisLabel: { color: 'rgba(168,162,154,0.72)', fontSize: 10, formatter: value => fmt(value) },
                     axisLine: { show: false },
                     axisTick: { show: false },
                     splitLine: { lineStyle: { color: 'rgba(255,255,255,0.055)' } }
