@@ -12,6 +12,7 @@ import urllib.error
 from datetime import datetime
 
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.json")
+DATA_JS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.js")
 
 VIDEOS = [
     {
@@ -43,6 +44,15 @@ def load_data():
 def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+    save_data_js(data)
+
+
+def save_data_js(data):
+    payload = json.dumps(data, ensure_ascii=False, indent=2)
+    with open(DATA_JS_FILE, "w", encoding="utf-8") as f:
+        f.write("window.BILI_PK_DATA = ")
+        f.write(payload)
+        f.write(";\n")
 
 
 def now_iso():

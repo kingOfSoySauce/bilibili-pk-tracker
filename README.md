@@ -7,12 +7,17 @@ B站视频PK数据实时对比看板。当前追踪的是《流量王01》系列
 ```
 ├── crawler.py       # 数据采集脚本，调用B站公开API，每30分钟跑一次
 ├── data.json        # 采集到的快照数据（时间序列）
-├── index.html       # 前端页面，ECharts图表，读取data.json渲染
+├── data.js          # data.json 的 JS 包装版，支持 file:// 直接打开
+├── index.html       # 前端页面，ECharts图表，读取data.json/data.js渲染
 └── assets/          # 视频封面和UP主头像
-    ├── red-cover.jpg    # 大虾队视频封面
-    ├── blue-cover.jpg   # 雨哥队视频封面
-    ├── red-avatar.jpg   # 徐大虾咯头像
-    └── blue-avatar.jpg  # 雨哥到处跑头像
+    ├── red-cover.jpg       # 大虾队视频封面
+    ├── blue-cover.jpg      # 雨哥队视频封面
+    ├── red-avatar.jpg      # 徐大虾咯头像
+    ├── sanmu-avatar.jpg    # 自来卷三木头像
+    ├── amazong-avatar.jpg  # 啊吗粽头像
+    ├── blue-avatar.jpg     # 雨哥到处跑头像
+    ├── liyuanjun-avatar.jpg # 力元君头像
+    └── zhebie-avatar.jpg   # 在下哲别头像
 ```
 
 ## 追踪的视频
@@ -34,7 +39,9 @@ Cron job ID: `74c816300831`，每30分钟执行一次，deliver=local。
 
 ## 前端
 
-纯静态HTML + ECharts，无构建步骤。本地预览：
+纯静态HTML + ECharts，无构建步骤。直接双击打开 `index.html` 时，页面会用 `data.js` 渲染播放趋势；通过 HTTP 访问时优先读取 `data.json`。
+
+本地预览：
 
 ```bash
 cd /Users/leon/Code/bilibili-pk-tracker
@@ -42,7 +49,7 @@ python3 -m http.server 9926
 # 访问 http://localhost:9926
 ```
 
-页面每5分钟自动刷新data.json。
+页面会定期刷新实时数据；历史播放趋势来自 `data.json`，静态直开时回退到 `data.js`。
 
 ## 部署
 
@@ -74,7 +81,7 @@ python3 -m http.server 9926
 4. 第一次发布后会得到一个 `*.pages.dev` 地址，可以直接发给别人访问。
 5. 到 GitHub `Actions` 手动运行一次 `Update Bilibili data`，之后会每30分钟自动采集；每次 `data.json` 被提交后，Cloudflare Pages 会自动重新发布。
 
-发布内容只包含 `index.html`、`data.json` 和 `assets/`，不会把采集脚本作为网页文件发布出去。
+发布内容只包含 `index.html`、`data.json`、`data.js` 和 `assets/`，不会把采集脚本作为网页文件发布出去。
 
 ## 团队背景
 

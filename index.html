@@ -6,6 +6,8 @@
     <title>流量王 PK 数据看板</title>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="./data.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Rubik:wght@500;700;800&display=swap" rel="stylesheet">
@@ -27,6 +29,7 @@
             --blue-soft: rgba(90, 200, 250, 0.2);
             --content: 1260px;
             --red-share: 50%;
+            --hero-shelf-height: 196px;
         }
 
         * { box-sizing: border-box; }
@@ -63,36 +66,13 @@
             min-height: 48px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-end;
             gap: 16px;
             border: 1px solid var(--line);
             border-radius: 8px;
             background: rgba(31, 22, 51, 0.72);
             backdrop-filter: blur(18px);
             padding: 0 16px;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
-        }
-
-        .brand-mark {
-            width: 26px;
-            height: 26px;
-            border-radius: 7px;
-            display: grid;
-            place-items: center;
-            background: linear-gradient(135deg, var(--pink), var(--lime));
-            color: #17101f;
-            font: 800 13px/1 "Rubik", sans-serif;
-        }
-
-        .brand-title {
-            font: 700 15px/1 "Rubik", "Noto Sans SC", sans-serif;
-            white-space: nowrap;
         }
 
         .top-meta {
@@ -104,26 +84,43 @@
             white-space: nowrap;
         }
 
-        .live-chip {
-            display: inline-flex;
+        .top-actions {
+            display: flex;
             align-items: center;
-            gap: 7px;
-            height: 24px;
-            padding: 0 9px;
-            border-radius: 6px;
-            border: 1px solid rgba(194, 239, 78, 0.22);
-            background: rgba(194, 239, 78, 0.1);
-            color: var(--lime);
-            font: 700 11px/1 "Rubik", sans-serif;
+            gap: 6px;
         }
 
-        .live-chip::before {
-            content: "";
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--lime);
-            box-shadow: 0 0 12px rgba(194, 239, 78, 0.7);
+        .icon-action {
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(247, 243, 251, 0.78);
+            padding: 0;
+            cursor: pointer;
+            transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+        }
+
+        .icon-action:hover,
+        .icon-action.is-done {
+            color: var(--lime);
+            border-color: rgba(194, 239, 78, 0.36);
+            background: rgba(194, 239, 78, 0.08);
+        }
+
+        .icon-action.is-error {
+            color: var(--pink);
+            border-color: rgba(250, 127, 170, 0.38);
+            background: rgba(250, 127, 170, 0.08);
+        }
+
+        .icon-action svg {
+            width: 15px;
+            height: 15px;
+            stroke-width: 2.2;
         }
 
         .hero-area {
@@ -134,9 +131,9 @@
         .hero-band {
             position: relative;
             width: min(var(--content), 100%);
-            aspect-ratio: 32 / 9;
-            min-height: 338px;
-            max-height: 420px;
+            aspect-ratio: 32 / 12.6;
+            min-height: 450px;
+            max-height: 520px;
             margin: 0 auto;
             overflow: hidden;
             border-radius: 8px;
@@ -148,32 +145,42 @@
             content: "";
             position: absolute;
             pointer-events: none;
-            z-index: -1;
         }
 
         .hero-band::before {
             inset: 0;
-            box-shadow:
-                inset 0 0 68px 48px rgba(21, 15, 35, 0.94),
-                inset 0 -110px 90px rgba(21, 15, 35, 0.96);
+            z-index: 2;
+            background:
+                linear-gradient(180deg,
+                    rgba(21, 15, 35, 0) 0%,
+                    rgba(21, 15, 35, 0) 22%,
+                    rgba(21, 15, 35, 0.28) 35%,
+                    rgba(21, 15, 35, 0.78) 58%,
+                    rgba(21, 15, 35, 0.96) 76%,
+                    rgba(21, 15, 35, 1) 100%);
+            box-shadow: inset 0 0 64px 36px rgba(21, 15, 35, 0.58);
         }
 
         .hero-band::after {
             top: -10%;
             bottom: -10%;
             left: 50%;
-            width: 22%;
+            width: 17%;
+            z-index: 3;
             transform: translateX(-50%);
-            background: rgba(21, 15, 35, 0.72);
-            filter: blur(34px);
+            background: rgba(21, 15, 35, 0.58);
+            filter: blur(28px);
         }
 
         .cover-layer {
             position: absolute;
-            inset: 0;
+            top: 0;
+            right: 0;
+            bottom: var(--hero-shelf-height);
+            left: 0;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            z-index: -3;
+            z-index: 0;
         }
 
         .cover-cell {
@@ -186,8 +193,9 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: saturate(1.08) contrast(1.04) brightness(0.72);
-            transform: scale(1.005);
+            object-position: center bottom;
+            filter: saturate(1.08) contrast(1.04) brightness(0.84);
+            transform-origin: center bottom;
         }
 
         .cover-cell::after {
@@ -207,41 +215,130 @@
                 linear-gradient(270deg, rgba(90, 200, 250, 0.32), rgba(21, 15, 35, 0.14) 44%, rgba(21, 15, 35, 0.82));
         }
 
-        .hero-content {
-            height: 100%;
-            padding: 22px 24px 20px;
+        .cover-blur-layer {
+            position: absolute;
+            inset: 0;
             display: grid;
-            grid-template-rows: auto 1fr auto;
-            gap: 14px;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+            z-index: 1;
+            background: #120c1d;
+            clip-path: inset(calc(100% - var(--hero-shelf-height)) 0 0 0);
         }
 
-        .hero-top,
-        .scoreboard,
-        .pk-action-row {
+        .cover-blur-cell {
+            position: relative;
+            overflow: visible;
+        }
+
+        .cover-blur-cell img {
+            position: absolute;
+            top: auto;
+            bottom: var(--hero-shelf-height);
+            left: 0;
+            width: 100%;
+            height: calc(100% - var(--hero-shelf-height));
+            object-fit: cover;
+            object-position: center bottom;
+            filter: saturate(1.08) contrast(1.04) brightness(0.84);
+            transform: scaleY(-1);
+            transform-origin: center bottom;
+        }
+
+        .cover-blur-cell.red img {
+            left: 0;
+            width: 100%;
+        }
+
+        .cover-blur-cell.blue img {
+            right: auto;
+            width: 100%;
+        }
+
+        .cover-blur-cell::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .cover-blur-cell.red::after {
+            background:
+                linear-gradient(90deg, rgba(255, 45, 85, 0.34), rgba(21, 15, 35, 0.14) 44%, rgba(21, 15, 35, 0.82));
+        }
+
+        .cover-blur-cell.blue::after {
+            background:
+                linear-gradient(270deg, rgba(90, 200, 250, 0.32), rgba(21, 15, 35, 0.14) 44%, rgba(21, 15, 35, 0.82));
+        }
+
+        .hero-content {
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            height: 100%;
+            padding: 18px 24px 0;
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            grid-template-rows: auto 1fr auto;
+            gap: 12px;
+        }
+
+        .hero-info-shelf {
+            grid-row: 3;
+            align-self: end;
+            min-height: var(--hero-shelf-height);
+            margin: 0 -24px;
+            padding: 14px 24px 18px;
+            display: grid;
+            align-content: center;
+            gap: 10px;
+            position: relative;
+            border-top: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .hero-top {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             align-items: center;
             gap: 18px;
         }
 
-        .badge {
-            justify-self: center;
-            height: 30px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            border-radius: 7px;
-            border: 1px solid rgba(194, 239, 78, 0.24);
-            background: rgba(194, 239, 78, 0.08);
-            color: var(--lime);
-            padding: 0 12px;
-            font: 700 12px/1 "Rubik", "Noto Sans SC", sans-serif;
+        .scoreboard {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            align-items: end;
+            gap: 16px;
+        }
+
+        .pk-action-row {
+            position: relative;
+            display: block;
+            min-height: 66px;
+            padding-bottom: 0;
         }
 
         .avatar-stack {
             display: flex;
             align-items: center;
             min-width: 0;
+        }
+
+        .pk-action-row .avatar-stack {
+            position: absolute;
+            top: 24px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .pk-action-row .avatar-stack.red {
+            left: 0;
+        }
+
+        .pk-action-row .avatar-stack.blue {
+            right: 0;
         }
 
         .avatar-stack.right { justify-content: flex-end; }
@@ -265,6 +362,8 @@
 
         .score-side {
             min-width: 0;
+            display: grid;
+            align-content: end;
         }
 
         .score-side.right {
@@ -279,29 +378,73 @@
         }
 
         .score-number {
-            font: 800 clamp(44px, 6vw, 84px)/0.92 "Rubik", "Noto Sans SC", sans-serif;
+            color: #fff;
+            font: 800 clamp(38px, 5vw, 68px)/0.92 "Rubik", "Noto Sans SC", sans-serif;
             white-space: nowrap;
             letter-spacing: 0;
+            display: inline-flex;
+            align-items: baseline;
+            flex-wrap: nowrap;
+            width: max-content;
+            perspective: 720px;
+        }
+
+        .score-char {
+            min-width: 0.54em;
+            display: inline-block;
+            text-align: center;
+            transform-origin: 50% 50%;
+        }
+
+        .score-char.unit,
+        .score-char.punct {
+            min-width: auto;
+        }
+
+        .score-char.flip {
+            animation: scoreFlip 560ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes scoreFlip {
+            0% {
+                transform: rotateX(0deg);
+                filter: brightness(1);
+            }
+            45% {
+                transform: rotateX(-88deg);
+                filter: brightness(0.72);
+            }
+            55% {
+                transform: rotateX(76deg);
+                filter: brightness(1.2);
+            }
+            100% {
+                transform: rotateX(0deg);
+                filter: brightness(1);
+            }
         }
 
         .score-number.red {
-            color: var(--red);
-            text-shadow: 0 0 34px rgba(255, 45, 85, 0.28);
+            color: #fff;
+            text-shadow:
+                0 0 34px rgba(255, 45, 85, 0.42),
+                0 2px 0 rgba(255, 45, 85, 0.52);
         }
 
         .score-number.blue {
-            color: var(--blue);
-            text-shadow: 0 0 34px rgba(90, 200, 250, 0.28);
+            color: #fff;
+            text-shadow:
+                0 0 34px rgba(90, 200, 250, 0.42),
+                0 2px 0 rgba(90, 200, 250, 0.5);
         }
 
-        .score-sub {
-            color: var(--faint);
-            font-size: 12px;
-            margin-top: 8px;
+        .score-side.right .score-number {
+            justify-self: end;
         }
 
         .title-lockup {
             display: grid;
+            align-self: end;
             justify-items: center;
             gap: 8px;
             text-align: center;
@@ -309,7 +452,7 @@
 
         .title-lockup h1 {
             margin: 0;
-            font-size: clamp(24px, 3.1vw, 46px);
+            font-size: clamp(22px, 2.45vw, 36px);
             line-height: 0.98;
             font-weight: 900;
             white-space: nowrap;
@@ -330,121 +473,140 @@
         }
 
         .pk-block {
-            min-width: min(620px, 100%);
-            border: 1px solid rgba(255, 255, 255, 0.13);
-            border-radius: 8px;
-            background: rgba(21, 15, 35, 0.58);
-            backdrop-filter: blur(18px);
-            padding: 12px 14px;
-            box-shadow: 0 18px 54px rgba(0, 0, 0, 0.28);
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            min-width: 0;
+            padding: 0;
         }
 
         .pk-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: var(--muted);
-            font-size: 12px;
-            margin-bottom: 8px;
+            position: relative;
+            height: 26px;
+            display: block;
+            color: rgba(255, 255, 255, 0.74);
+            font-size: 13px;
+            font-weight: 800;
+            margin-bottom: 7px;
+            text-shadow: 0 2px 16px rgba(0, 0, 0, 0.55);
+        }
+
+        .pk-head .diff-chip {
+            position: absolute;
+            top: 50%;
+            left: var(--red-share);
+            transform: translate(-50%, -50%);
+            white-space: nowrap;
+            z-index: 4;
         }
 
         .pk-percent {
-            font: 700 13px/1 "Rubik", sans-serif;
+            position: absolute;
+            top: 50%;
+            z-index: 3;
+            color: #fff;
+            font: 800 13px/1 "Rubik", sans-serif;
+            text-shadow: 0 1px 10px rgba(0, 0, 0, 0.75);
+            white-space: nowrap;
+            pointer-events: none;
         }
 
-        .pk-percent.red { color: var(--red); }
-        .pk-percent.blue { color: var(--blue); }
+        .pk-percent.red {
+            left: calc(var(--red-share) - 10px);
+            transform: translate(-100%, -50%);
+        }
+
+        .pk-percent.blue {
+            left: calc(var(--red-share) + 10px);
+            transform: translateY(-50%);
+        }
+
+        .pk-head span {
+            color: #fff;
+            letter-spacing: 0;
+        }
 
         .pk-track {
             position: relative;
-            height: 18px;
+            height: 28px;
             overflow: hidden;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-left-color: transparent;
+            border-right-color: transparent;
             background:
-                linear-gradient(90deg, var(--red) 0 var(--red-share), var(--blue) var(--red-share) 100%);
-        }
-
-        .pk-track::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 62%);
+                linear-gradient(90deg,
+                    rgba(255, 45, 85, 0) 0%,
+                    rgba(255, 45, 85, 0.18) 7%,
+                    rgba(255, 45, 85, 0.46) calc(var(--red-share) - 1px),
+                    rgba(90, 200, 250, 0.46) calc(var(--red-share) + 1px),
+                    rgba(90, 200, 250, 0.18) 93%,
+                    rgba(90, 200, 250, 0) 100%);
+            backdrop-filter: blur(6px);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 24px rgba(255, 45, 85, 0.09),
+                0 0 24px rgba(90, 200, 250, 0.09),
+                0 16px 40px rgba(0, 0, 0, 0.34);
         }
 
         .pk-tick {
             position: absolute;
-            top: -8px;
-            bottom: -8px;
+            top: 0;
+            bottom: 0;
             left: var(--red-share);
-            width: 3px;
+            width: 4px;
+            z-index: 2;
             transform: translateX(-50%);
             border-radius: 4px;
-            background: var(--lime);
-            box-shadow: 0 0 18px rgba(194, 239, 78, 0.82);
+            background: rgba(220, 224, 230, 0.82);
+            box-shadow:
+                0 0 10px rgba(220, 224, 230, 0.36);
         }
 
         .watch-link {
-            height: 36px;
-            min-width: 112px;
+            height: 32px;
+            min-width: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 7px;
             border-radius: 6px;
-            border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.085);
+            border: 0;
+            background: transparent;
             color: var(--text);
             font-size: 12px;
             font-weight: 800;
-            backdrop-filter: blur(12px);
+            padding: 0;
+            backdrop-filter: none;
+            text-shadow: 0 2px 16px rgba(0, 0, 0, 0.72);
+        }
+
+        .watch-link svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2.4;
         }
 
         .watch-link.red {
             justify-self: start;
+            color: #fff;
         }
 
         .watch-link.blue {
             justify-self: end;
+            color: #fff;
         }
 
+        .watch-link.red svg { color: var(--red); }
+        .watch-link.blue svg { color: var(--blue); }
+
         .watch-link.red:hover {
-            border-color: rgba(255, 45, 85, 0.62);
-            background: rgba(255, 45, 85, 0.17);
+            color: var(--red);
         }
 
         .watch-link.blue:hover {
-            border-color: rgba(90, 200, 250, 0.62);
-            background: rgba(90, 200, 250, 0.15);
-        }
-
-        .quick-stats {
-            width: min(var(--content), 100%);
-            margin: -4px auto 0;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .mini-stat {
-            min-height: 54px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            border: 1px solid var(--line-soft);
-            border-radius: 8px;
-            background: rgba(31, 22, 51, 0.56);
-            padding: 10px 12px;
-        }
-
-        .mini-stat span {
-            color: var(--faint);
-            font-size: 11px;
-        }
-
-        .mini-stat strong {
-            font: 700 18px/1 "Rubik", "Noto Sans SC", sans-serif;
-            white-space: nowrap;
+            color: var(--blue);
         }
 
         .analysis-grid {
@@ -485,41 +647,6 @@
             line-height: 1;
         }
 
-        .panel-title span {
-            color: var(--faint);
-            font-size: 11px;
-        }
-
-        .panel-strip {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .strip-item {
-            min-width: 0;
-            border: 1px solid var(--line-soft);
-            border-radius: 7px;
-            background: rgba(255, 255, 255, 0.035);
-            padding: 8px 9px;
-        }
-
-        .strip-item span {
-            display: block;
-            color: var(--faint);
-            font-size: 10px;
-            margin-bottom: 5px;
-        }
-
-        .strip-item strong {
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font: 700 14px/1 "Rubik", "Noto Sans SC", sans-serif;
-        }
-
         .chart {
             flex: 1;
             min-height: 260px;
@@ -527,24 +654,36 @@
 
         .metric-chart {
             flex: 1;
-            min-height: 260px;
+            min-height: 300px;
             display: grid;
-            grid-template-rows: repeat(4, 1fr);
-            gap: 10px;
+            grid-template-rows: repeat(6, minmax(40px, 1fr));
+            gap: 8px;
             padding-top: 2px;
         }
 
         .metric-row {
             display: grid;
-            grid-template-columns: 36px minmax(0, 1fr);
+            grid-template-columns: 76px minmax(0, 1fr);
             align-items: center;
-            gap: 12px;
-            min-height: 56px;
+            gap: 10px;
+            min-height: 40px;
+        }
+
+        .metric-label {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(247, 243, 251, 0.82);
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
         }
 
         .metric-icon {
             width: 32px;
             height: 32px;
+            flex: 0 0 32px;
             display: grid;
             place-items: center;
             border-radius: 8px;
@@ -561,14 +700,14 @@
 
         .metric-bars {
             display: grid;
-            gap: 7px;
+            gap: 5px;
             min-width: 0;
         }
 
         .metric-bar-line {
             --pct: 0%;
             position: relative;
-            height: 23px;
+            height: 18px;
             border-radius: 6px;
             background: rgba(255, 255, 255, 0.045);
             overflow: visible;
@@ -607,8 +746,8 @@
         }
 
         .metric-tip img {
-            width: 22px;
-            height: 22px;
+            width: 19px;
+            height: 19px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid rgba(255, 255, 255, 0.74);
@@ -618,50 +757,53 @@
         .metric-bar-line.red-line .metric-tip img { border-color: var(--red); }
         .metric-bar-line.blue-line .metric-tip img { border-color: var(--blue); }
 
-        .footer {
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            color: var(--faint);
-            font-size: 11px;
-            padding: 0 3px;
-        }
-
         @media (max-width: 980px) {
             .page { padding: 14px; }
             .hero-band {
-                min-height: 430px;
+                --hero-shelf-height: 190px;
+                min-height: 450px;
                 aspect-ratio: auto;
             }
             .hero-content {
-                padding: 20px 18px;
+                padding: 18px 18px 0;
             }
-            .scoreboard,
-            .pk-action-row {
-                grid-template-columns: 1fr;
-                justify-items: stretch;
+            .hero-info-shelf {
+                margin: 0 -18px;
+                padding: 13px 18px 16px;
+            }
+            .scoreboard {
+                grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+                align-items: end;
+                gap: 14px;
                 text-align: left;
+            }
+            .pk-action-row {
+                display: block;
+                min-height: 64px;
+                padding-bottom: 0;
+            }
+            .pk-action-row .avatar-stack {
+                top: 23px;
             }
             .score-side.right {
-                text-align: left;
+                text-align: right;
             }
             .title-lockup {
-                justify-items: start;
-                text-align: left;
+                justify-items: center;
+                text-align: center;
             }
             .title-lockup h1 {
-                white-space: normal;
+                font-size: clamp(20px, 3.2vw, 30px);
+                white-space: nowrap;
+            }
+            .score-number {
+                font-size: clamp(34px, 5.8vw, 56px);
             }
             .pk-block {
                 width: 100%;
                 min-width: 0;
-                order: -1;
+                order: 0;
             }
-            .watch-link.red,
-            .watch-link.blue {
-                justify-self: stretch;
-            }
-            .quick-stats,
             .analysis-grid {
                 grid-template-columns: 1fr;
             }
@@ -669,17 +811,23 @@
 
         @media (max-width: 640px) {
             .page {
-                padding: 10px;
-                gap: 12px;
+                padding: 8px;
+                gap: 8px;
             }
             .topbar {
-                min-height: 48px;
+                min-height: 40px;
                 flex-wrap: wrap;
-                padding: 10px;
+                padding: 6px 8px;
             }
             .top-meta {
                 width: 100%;
-                justify-content: space-between;
+                justify-content: flex-end;
+                gap: 8px;
+                font-size: 11px;
+            }
+            .icon-action {
+                width: 28px;
+                height: 28px;
             }
             .hero-area {
                 width: 100vw;
@@ -687,78 +835,195 @@
                 margin-right: calc(50% - 50vw);
             }
             .hero-band {
+                --hero-shelf-height: 158px;
                 width: 100%;
-                min-height: 560px;
+                min-height: 382px;
                 border-radius: 0;
             }
             .cover-layer {
-                grid-template-columns: 1fr;
-                grid-template-rows: 1fr 1fr;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: none;
             }
             .hero-band::after {
-                top: 32%;
-                bottom: 32%;
-                left: -8%;
-                right: -8%;
+                top: -10%;
+                bottom: -10%;
+                left: 45%;
+                right: 45%;
                 width: auto;
                 transform: none;
-                filter: blur(28px);
+                filter: blur(24px);
             }
             .hero-content {
-                padding: 18px 12px;
-                gap: 12px;
+                padding: 12px 12px 0;
+                gap: 8px;
+            }
+            .hero-info-shelf {
+                margin: 0 -12px;
+                padding: 10px 12px 12px;
+                gap: 8px;
             }
             .hero-top {
-                grid-template-columns: 1fr auto 1fr;
-                gap: 8px;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
             }
             .avatar-chip {
-                width: 34px;
-                height: 34px;
+                width: 28px;
+                height: 28px;
             }
             .avatar-chip + .avatar-chip {
-                margin-left: -8px;
+                margin-left: -7px;
+            }
+            .scoreboard {
+                grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+                grid-template-areas:
+                    "red title blue";
+                align-items: end;
+                align-content: end;
+                gap: 0 7px;
+                text-align: left;
+            }
+            .score-side {
+                grid-area: red;
+                min-width: 0;
+            }
+            .score-side.right {
+                grid-area: blue;
+                text-align: right;
+            }
+            .title-lockup {
+                grid-area: title;
+                justify-items: center;
+                text-align: center;
+                align-self: end;
+                gap: 0;
+                padding-bottom: 1px;
+            }
+            .title-lockup h1 {
+                font-size: clamp(15px, 4.2vw, 17px);
+                line-height: 0.95;
+                white-space: nowrap;
+            }
+            .diff-chip {
+                height: 24px;
+                padding: 0 7px;
+                font-size: 10px;
+            }
+            .up-name {
+                font-size: 10px;
+                margin-bottom: 3px;
             }
             .score-number {
-                font-size: 44px;
+                font-size: clamp(29px, 8.1vw, 32px);
             }
-            .quick-stats {
-                gap: 8px;
+            .score-char {
+                min-width: 0.46em;
             }
-            .mini-stat {
-                min-height: 48px;
-                padding: 9px;
+            .score-char.unit {
+                min-width: auto;
             }
-            .mini-stat strong {
-                font-size: 15px;
+            .pk-action-row {
+                display: block;
+                min-height: 57px;
+                padding-bottom: 0;
+            }
+            .pk-block {
+                order: 0;
+            }
+            .pk-action-row .avatar-stack {
+                top: 25px;
+            }
+            .pk-action-row .avatar-stack.red {
+                left: 4px;
+            }
+            .pk-action-row .avatar-stack.blue {
+                right: 4px;
+            }
+            .watch-link {
+                width: auto;
+                min-width: 0;
+                height: 28px;
+                font-size: 11px;
+                gap: 5px;
+            }
+            .watch-link svg {
+                width: 13px;
+                height: 13px;
+            }
+            .hero-top .watch-link.red {
+                justify-self: start;
+            }
+            .hero-top .watch-link.blue {
+                justify-self: end;
+            }
+            .pk-head {
+                margin-bottom: 5px;
+                height: 24px;
+                font-size: 12px;
+            }
+            .pk-track {
+                height: 26px;
+            }
+            .pk-percent {
+                font-size: 12px;
+            }
+            .analysis-grid {
+                gap: 10px;
+                min-height: 0;
             }
             .panel {
-                min-height: 360px;
-                padding: 13px;
+                min-height: 204px;
+                padding: 10px;
             }
-            .panel-strip {
-                grid-template-columns: 1fr;
+            .panel-head {
+                margin-bottom: 8px;
+            }
+            .panel-title h2 {
+                font-size: 14px;
+            }
+            .chart {
+                min-height: 154px;
+            }
+            .metric-chart {
+                min-height: 250px;
+                gap: 6px;
             }
             .metric-row {
-                grid-template-columns: 32px minmax(0, 1fr);
-                gap: 9px;
+                grid-template-columns: 56px minmax(0, 1fr);
+                gap: 8px;
+                min-height: 36px;
+            }
+            .metric-label {
+                gap: 5px;
+                font-size: 10px;
             }
             .metric-icon {
-                width: 30px;
-                height: 30px;
+                width: 24px;
+                height: 24px;
+                flex-basis: 24px;
+                border-radius: 6px;
+            }
+            .metric-icon svg {
+                width: 15px;
+                height: 15px;
+            }
+            .metric-bars {
+                gap: 3px;
+            }
+            .metric-bar-line {
+                height: 16px;
+            }
+            .metric-fill {
+                min-width: 20px;
+                border-radius: 5px;
             }
             .metric-tip {
-                gap: 4px;
-                font-size: 10px;
-                left: min(var(--pct), calc(100% - 58px));
+                gap: 3px;
+                font-size: 9px;
+                left: min(var(--pct), calc(100% - 52px));
             }
             .metric-tip img {
-                width: 20px;
-                height: 20px;
-            }
-            .footer {
-                flex-direction: column;
-                gap: 6px;
+                width: 15px;
+                height: 15px;
             }
         }
     </style>
@@ -766,14 +1031,19 @@
 <body>
     <div class="page">
         <header class="topbar">
-            <div class="brand">
-                <div class="brand-mark">PK</div>
-                <div class="brand-title">Bilibili PK Tracker</div>
-            </div>
             <div class="top-meta">
-                <span class="live-chip">LIVE</span>
                 <span id="topTime">等待数据</span>
-                <span id="dataPoints">-- 个数据点</span>
+                <div class="top-actions" aria-label="页面操作">
+                    <button class="icon-action" id="copyImageBtn" type="button" title="复制页面为图片到剪切板" aria-label="复制页面为图片到剪切板">
+                        <i data-lucide="image" aria-hidden="true"></i>
+                    </button>
+                    <button class="icon-action" id="sharePageBtn" type="button" title="分享本页面" aria-label="分享本页面">
+                        <i data-lucide="share-2" aria-hidden="true"></i>
+                    </button>
+                    <a class="icon-action" href="https://github.com/kingOfSoySauce/bilibili-pk-tracker" target="_blank" rel="noreferrer" title="GitHub 地址" aria-label="GitHub 地址">
+                        <i data-lucide="git-branch" aria-hidden="true"></i>
+                    </a>
+                </div>
             </div>
         </header>
 
@@ -784,61 +1054,57 @@
                         <div class="cover-cell red"><img src="assets/red-cover.jpg" alt=""></div>
                         <div class="cover-cell blue"><img src="assets/blue-cover.jpg" alt=""></div>
                     </div>
+                    <div class="cover-blur-layer" aria-hidden="true">
+                        <div class="cover-blur-cell red"><img src="assets/red-cover.jpg" alt=""></div>
+                        <div class="cover-blur-cell blue"><img src="assets/blue-cover.jpg" alt=""></div>
+                    </div>
 
                     <div class="hero-content">
                         <div class="hero-top">
-                            <div class="avatar-stack red" aria-label="红方头像">
-                                <img class="avatar-chip" src="assets/red-avatar.jpg" alt="">
-                                <img class="avatar-chip" src="assets/red-avatar.jpg" alt="">
-                                <img class="avatar-chip" src="assets/red-avatar.jpg" alt="">
-                            </div>
-                            <div class="badge">流量王 01</div>
-                            <div class="avatar-stack blue right" aria-label="蓝方头像">
-                                <img class="avatar-chip" src="assets/blue-avatar.jpg" alt="">
-                                <img class="avatar-chip" src="assets/blue-avatar.jpg" alt="">
-                                <img class="avatar-chip" src="assets/blue-avatar.jpg" alt="">
-                            </div>
+                            <a class="watch-link red" href="https://www.bilibili.com/video/BV1zgTn6rEsh" target="_blank" rel="noreferrer"><i data-lucide="play" aria-hidden="true"></i><span>去看视频</span></a>
+                            <a class="watch-link blue" href="https://www.bilibili.com/video/BV1UUTJ6dErS" target="_blank" rel="noreferrer"><i data-lucide="play" aria-hidden="true"></i><span>去看视频</span></a>
                         </div>
 
-                        <div class="scoreboard">
-                            <div class="score-side">
-                                <div class="up-name" id="redUpName">徐大虾咯</div>
-                                <div class="score-number red" id="redViews">--</div>
-                                <div class="score-sub" id="redGain">采集中</div>
+                        <div class="hero-info-shelf">
+                            <div class="scoreboard">
+                                <div class="score-side">
+                                    <div class="up-name" id="redUpName">徐大虾咯</div>
+                                    <div class="score-number red" id="redViews">--</div>
+                                </div>
+                                <div class="title-lockup">
+                                    <h1>大虾队 VS 雨哥队</h1>
+                                </div>
+                                <div class="score-side right">
+                                    <div class="up-name" id="blueUpName">雨哥到处跑</div>
+                                    <div class="score-number blue" id="blueViews">--</div>
+                                </div>
                             </div>
-                            <div class="title-lockup">
-                                <h1>大虾队 VS 雨哥队</h1>
-                                <div class="diff-chip" id="viewDiff">差距 --</div>
-                            </div>
-                            <div class="score-side right">
-                                <div class="up-name" id="blueUpName">雨哥到处跑</div>
-                                <div class="score-number blue" id="blueViews">--</div>
-                                <div class="score-sub" id="blueGain">采集中</div>
-                            </div>
-                        </div>
 
-                        <div class="pk-action-row">
-                            <a class="watch-link red" href="https://www.bilibili.com/video/BV1zgTn6rEsh" target="_blank" rel="noreferrer">去看视频</a>
-                            <div class="pk-block">
-                                <div class="pk-head">
-                                    <span class="pk-percent red" id="redShareLabel">--</span>
-                                    <span>播放量占比</span>
-                                    <span class="pk-percent blue" id="blueShareLabel">--</span>
+                            <div class="pk-action-row">
+                                <div class="avatar-stack red" aria-label="红方头像">
+                                    <img class="avatar-chip" src="assets/red-avatar.jpg" alt="徐大虾咯">
+                                    <img class="avatar-chip" src="assets/sanmu-avatar.jpg" alt="自来卷三木">
+                                    <img class="avatar-chip" src="assets/amazong-avatar.jpg" alt="啊吗粽">
                                 </div>
-                                <div class="pk-track">
-                                    <span class="pk-tick"></span>
+                                <div class="pk-block">
+                                    <div class="pk-head">
+                                        <div class="diff-chip" id="viewDiff">--</div>
+                                    </div>
+                                    <div class="pk-track">
+                                        <span class="pk-percent red" id="redShareLabel">--</span>
+                                        <span class="pk-tick"></span>
+                                        <span class="pk-percent blue" id="blueShareLabel">--</span>
+                                    </div>
+                                </div>
+                                <div class="avatar-stack blue right" aria-label="蓝方头像">
+                                    <img class="avatar-chip" src="assets/blue-avatar.jpg" alt="雨哥到处跑">
+                                    <img class="avatar-chip" src="assets/liyuanjun-avatar.jpg" alt="力元君">
+                                    <img class="avatar-chip" src="assets/zhebie-avatar.jpg" alt="在下哲别">
                                 </div>
                             </div>
-                            <a class="watch-link blue" href="https://www.bilibili.com/video/BV1UUTJ6dErS" target="_blank" rel="noreferrer">去看视频</a>
                         </div>
                     </div>
                 </div>
-            </section>
-
-            <section class="quick-stats" aria-label="实时概览">
-                <div class="mini-stat"><span>领先方</span><strong id="leader">--</strong></div>
-                <div class="mini-stat"><span>总播放</span><strong id="totalViews">--</strong></div>
-                <div class="mini-stat"><span>刷新</span><strong id="refreshTime">--</strong></div>
             </section>
 
             <section class="analysis-grid" aria-label="PK 数据分析">
@@ -846,13 +1112,7 @@
                     <div class="panel-head">
                         <div class="panel-title">
                             <h2>播放趋势</h2>
-                            <span>纵轴从 0 起，头像标记最新端点</span>
                         </div>
-                    </div>
-                    <div class="panel-strip">
-                        <div class="strip-item"><span>当前差距</span><strong id="sideDiff">--</strong></div>
-                        <div class="strip-item"><span>红方增量</span><strong id="sideRedGain">--</strong></div>
-                        <div class="strip-item"><span>蓝方增量</span><strong id="sideBlueGain">--</strong></div>
                     </div>
                     <div id="viewChart" class="chart"></div>
                 </section>
@@ -861,30 +1121,33 @@
                     <div class="panel-head">
                         <div class="panel-title">
                             <h2>互动对比</h2>
-                            <span>同图并列柱，头像贴在每根柱子末端</span>
                         </div>
                     </div>
-                    <div class="panel-strip">
-                        <div class="strip-item"><span>点赞领先</span><strong id="likeLead">--</strong></div>
-                        <div class="strip-item"><span>投币领先</span><strong id="coinLead">--</strong></div>
-                        <div class="strip-item"><span>收藏领先</span><strong id="favLead">--</strong></div>
-                    </div>
-                    <div id="engagementChart" class="metric-chart" aria-label="点赞、收藏、转发、投币互动对比"></div>
+                    <div id="engagementChart" class="metric-chart" aria-label="点赞、收藏、转发、投币、弹幕、评论互动对比"></div>
                 </section>
             </section>
         </main>
-
-        <footer class="footer">
-            <span>数据来源：B 站公开 API，每 30 分钟自动采集</span>
-            <span id="footerTime">--</span>
-        </footer>
     </div>
 
     <script>
         const DATA_URL = './data.json';
+        const BILI_API_URL = 'https://api.bilibili.com/x/web-interface/view?bvid=';
         const RED = '#ff2d55';
         const BLUE = '#5ac8fa';
+        const GITHUB_URL = 'https://github.com/kingOfSoySauce/bilibili-pk-tracker';
+        const VIDEO_CONFIG = {
+            red: { label: '红队', team: '大虾队', bvid: 'BV1zgTn6rEsh' },
+            blue: { label: '蓝队', team: '雨哥队', bvid: 'BV1UUTJ6dErS' }
+        };
         let viewChart;
+        let historySnapshots = [];
+        let lastRealtimeOk = false;
+
+        function getBundledHistoryData() {
+            return window.BILI_PK_DATA && Array.isArray(window.BILI_PK_DATA.snapshots)
+                ? window.BILI_PK_DATA
+                : null;
+        }
 
         function fmt(n) {
             if (n == null || Number.isNaN(n)) return '--';
@@ -895,6 +1158,12 @@
         function fmtSigned(n) {
             if (n == null || Number.isNaN(n)) return '--';
             return (n > 0 ? '+' : '') + fmt(n);
+        }
+
+        function fmtWanInteger(n) {
+            if (n == null || Number.isNaN(n)) return '--';
+            if (Math.abs(n) >= 10000) return Math.round(n / 10000) + ' 万';
+            return n.toLocaleString('zh-CN');
         }
 
         function fmtTime(iso) {
@@ -914,35 +1183,208 @@
             return Math.max(0, Math.min(100, part / total * 100));
         }
 
-        function leadText(redValue, blueValue) {
-            if ((redValue || 0) === (blueValue || 0)) return '持平';
-            return (redValue || 0) > (blueValue || 0) ? '红方' : '蓝方';
-        }
-
         function setText(id, value) {
             const el = document.getElementById(id);
             if (el) el.textContent = value;
         }
 
-        async function loadData() {
-            let data;
+        function setFlipText(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            const text = String(value);
+            const previous = el.dataset.prevText || '';
+            const animate = Boolean(previous && previous !== text);
+            const previousChars = Array.from(previous);
+
+            el.replaceChildren(...Array.from(text).map((char, index) => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                span.className = 'score-char';
+                if (/[\u4e00-\u9fff]/.test(char)) span.classList.add('unit');
+                if (/[.,，]/.test(char)) span.classList.add('punct');
+                if (animate && previousChars[index] !== char) span.classList.add('flip');
+                return span;
+            }));
+
+            el.dataset.prevText = text;
+        }
+
+        function flashAction(button) {
+            if (!button) return;
+            button.classList.add('is-done');
+            window.setTimeout(() => button.classList.remove('is-done'), 1100);
+        }
+
+        function markActionError(button, message) {
+            if (!button) return;
+            const originalTitle = button.getAttribute('title');
+            button.classList.add('is-error');
+            button.setAttribute('title', message);
+            window.setTimeout(() => {
+                button.classList.remove('is-error');
+                if (originalTitle) button.setAttribute('title', originalTitle);
+            }, 1600);
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        async function copyPageImage() {
+            const button = document.getElementById('copyImageBtn');
             try {
-                const response = await fetch(DATA_URL + '?t=' + Date.now());
-                data = await response.json();
+                if (!window.html2canvas) throw new Error('html2canvas unavailable');
+                const canvas = await window.html2canvas(document.querySelector('.page'), {
+                    backgroundColor: '#150f23',
+                    scale: Math.min(window.devicePixelRatio || 1, 2),
+                    useCORS: true
+                });
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                if (!blob) throw new Error('image render failed');
+
+                if (navigator.clipboard && window.ClipboardItem) {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    flashAction(button);
+                    return;
+                }
+
+                downloadBlob(blob, 'bilibili-pk-dashboard.png');
+                flashAction(button);
             } catch (error) {
-                setText('topTime', '数据加载失败');
-                return;
+                console.warn('copy image failed', error);
+                markActionError(button, '复制失败，请用本地服务或 HTTPS 打开');
             }
+        }
 
-            const snaps = data.snapshots || [];
-            if (!snaps.length) return;
+        async function sharePage() {
+            const button = document.getElementById('sharePageBtn');
+            const payload = {
+                title: document.title,
+                text: '流量王 PK 数据看板',
+                url: window.location.href || GITHUB_URL
+            };
 
-            const latest = snaps[snaps.length - 1];
-            const first = snaps[0];
-            const redLatest = latest.videos['红队'] || {};
-            const blueLatest = latest.videos['蓝队'] || {};
-            const redFirst = first.videos['红队'] || {};
-            const blueFirst = first.videos['蓝队'] || {};
+            try {
+                if (navigator.share) {
+                    await navigator.share(payload);
+                } else if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(payload.url);
+                }
+                flashAction(button);
+            } catch (error) {
+                if (error && error.name !== 'AbortError') {
+                    console.warn('share failed', error);
+                    markActionError(button, '分享失败，请复制地址');
+                }
+            }
+        }
+
+        function initActions() {
+            const copyButton = document.getElementById('copyImageBtn');
+            const shareButton = document.getElementById('sharePageBtn');
+            if (copyButton) copyButton.addEventListener('click', copyPageImage);
+            if (shareButton) shareButton.addEventListener('click', sharePage);
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        function normalizeBiliVideo(video) {
+            const stat = video.stat || {};
+            return {
+                title: video.title,
+                up: video.owner?.name || '',
+                view: stat.view || 0,
+                like: stat.like || 0,
+                coin: stat.coin || 0,
+                favorite: stat.favorite || 0,
+                share: stat.share || 0,
+                danmaku: stat.danmaku || 0,
+                reply: stat.reply || 0,
+                pubdate: video.pubdate,
+                duration: video.duration
+            };
+        }
+
+        async function fetchBiliVideoCors(bvid) {
+            const response = await fetch(BILI_API_URL + encodeURIComponent(bvid) + '&t=' + Date.now(), {
+                cache: 'no-store',
+                credentials: 'omit',
+                mode: 'cors'
+            });
+            if (!response.ok) throw new Error(`Bilibili API HTTP ${response.status}`);
+            const result = await response.json();
+            if (result.code !== 0) throw new Error(result.message || 'Bilibili API error');
+            return normalizeBiliVideo(result.data || {});
+        }
+
+        function fetchBiliVideoJsonp(bvid) {
+            return new Promise((resolve, reject) => {
+                const callbackName = `__biliPkCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                const script = document.createElement('script');
+                const cleanup = () => {
+                    delete window[callbackName];
+                    script.remove();
+                };
+                const timeout = window.setTimeout(() => {
+                    cleanup();
+                    reject(new Error('Bilibili JSONP timeout'));
+                }, 12000);
+
+                window[callbackName] = result => {
+                    window.clearTimeout(timeout);
+                    cleanup();
+                    if (!result || result.code !== 0) {
+                        reject(new Error(result?.message || 'Bilibili JSONP error'));
+                        return;
+                    }
+                    resolve(normalizeBiliVideo(result.data || {}));
+                };
+
+                script.onerror = () => {
+                    window.clearTimeout(timeout);
+                    cleanup();
+                    reject(new Error('Bilibili JSONP script failed'));
+                };
+                script.src = `${BILI_API_URL}${encodeURIComponent(bvid)}&jsonp=jsonp&callback=${callbackName}&t=${Date.now()}`;
+                document.head.appendChild(script);
+            });
+        }
+
+        async function fetchBiliVideo(bvid) {
+            try {
+                return await fetchBiliVideoCors(bvid);
+            } catch (error) {
+                console.warn('Bilibili CORS fetch failed, retrying with JSONP', error);
+                return fetchBiliVideoJsonp(bvid);
+            }
+        }
+
+        function buildRealtimeSnapshot(redVideo, blueVideo) {
+            const now = new Date();
+            return {
+                ts: Math.floor(now.getTime() / 1000),
+                time: now.toISOString(),
+                videos: {
+                    [VIDEO_CONFIG.red.label]: redVideo,
+                    [VIDEO_CONFIG.blue.label]: blueVideo
+                }
+            };
+        }
+
+        function renderLatestSnapshot(snapshot, options = {}) {
+            if (!snapshot) return;
+
+            const redLatest = snapshot.videos?.[VIDEO_CONFIG.red.label] || {};
+            const blueLatest = snapshot.videos?.[VIDEO_CONFIG.blue.label] || {};
 
             const redViews = redLatest.view || 0;
             const blueViews = blueLatest.view || 0;
@@ -950,36 +1392,71 @@
             const redShare = pct(redViews, totalViews);
             const blueShare = 100 - redShare;
             const diff = redViews - blueViews;
-            const redGain = redViews - (redFirst.view || redViews);
-            const blueGain = blueViews - (blueFirst.view || blueViews);
+            const leader = diff >= 0 ? VIDEO_CONFIG.red.team : VIDEO_CONFIG.blue.team;
 
             document.documentElement.style.setProperty('--red-share', redShare.toFixed(2) + '%');
-            setText('topTime', `${fmtDateTime(latest.time)} 更新`);
-            setText('footerTime', `最新快照：${latest.time}`);
-            setText('dataPoints', `${snaps.length} 个数据点`);
-            setText('redViews', fmt(redViews));
-            setText('blueViews', fmt(blueViews));
-            setText('redGain', `采集后 ${fmtSigned(redGain)}`);
-            setText('blueGain', `采集后 ${fmtSigned(blueGain)}`);
-            setText('viewDiff', `差距 ${fmt(Math.abs(diff))}`);
-            setText('sideDiff', fmt(Math.abs(diff)));
-            setText('totalViews', fmt(totalViews));
-            setText('refreshTime', fmtTime(latest.time));
-            setText('leader', diff >= 0 ? '红方' : '蓝方');
+            setText('topTime', `${fmtDateTime(snapshot.time)} ${options.realtime ? '实时更新' : '更新'}`);
+            setFlipText('redViews', fmt(redViews));
+            setFlipText('blueViews', fmt(blueViews));
+            setText('viewDiff', `${leader}领先 ${fmtWanInteger(Math.abs(diff))}`);
             setText('redShareLabel', `${redShare.toFixed(1)}%`);
             setText('blueShareLabel', `${blueShare.toFixed(1)}%`);
-            setText('sideRedGain', fmtSigned(redGain));
-            setText('sideBlueGain', fmtSigned(blueGain));
-            setText('likeLead', leadText(redLatest.like, blueLatest.like));
-            setText('coinLead', leadText(redLatest.coin, blueLatest.coin));
-            setText('favLead', leadText(redLatest.favorite, blueLatest.favorite));
-
-            const times = snaps.map(s => fmtDateTime(s.time));
-            const redSeries = snaps.map(s => (s.videos['红队'] || {}).view || 0);
-            const blueSeries = snaps.map(s => (s.videos['蓝队'] || {}).view || 0);
-
-            renderViewChart(times, redSeries, blueSeries);
             renderEngagementChart(redLatest, blueLatest);
+        }
+
+        function renderHistoryChart(snaps) {
+            if (!snaps.length) return;
+            const times = snaps.map(s => fmtDateTime(s.time));
+            const redSeries = snaps.map(s => (s.videos?.[VIDEO_CONFIG.red.label] || {}).view || 0);
+            const blueSeries = snaps.map(s => (s.videos?.[VIDEO_CONFIG.blue.label] || {}).view || 0);
+            renderViewChart(times, redSeries, blueSeries);
+        }
+
+        async function loadHistoryData(options = {}) {
+            let data;
+            try {
+                const response = await fetch(DATA_URL + '?t=' + Date.now());
+                if (!response.ok) throw new Error(`data.json HTTP ${response.status}`);
+                data = await response.json();
+            } catch (error) {
+                data = getBundledHistoryData();
+                if (!data) {
+                    setText('topTime', '数据加载失败');
+                    return;
+                }
+            }
+
+            const snaps = data.snapshots || [];
+            if (!snaps.length) return;
+
+            historySnapshots = snaps;
+            renderHistoryChart(historySnapshots);
+
+            if (options.updateLatest || !lastRealtimeOk) {
+                renderLatestSnapshot(historySnapshots[historySnapshots.length - 1]);
+            }
+        }
+
+        async function loadRealtimeData() {
+            try {
+                const [redVideo, blueVideo] = await Promise.all([
+                    fetchBiliVideo(VIDEO_CONFIG.red.bvid),
+                    fetchBiliVideo(VIDEO_CONFIG.blue.bvid)
+                ]);
+                lastRealtimeOk = true;
+                renderLatestSnapshot(buildRealtimeSnapshot(redVideo, blueVideo), { realtime: true });
+            } catch (error) {
+                lastRealtimeOk = false;
+                console.warn('realtime fetch failed, keeping historical data', error);
+                if (historySnapshots.length) {
+                    renderLatestSnapshot(historySnapshots[historySnapshots.length - 1]);
+                }
+            }
+        }
+
+        async function bootstrapData() {
+            await loadHistoryData({ updateLatest: true });
+            await loadRealtimeData();
         }
 
         function renderViewChart(times, redSeries, blueSeries) {
@@ -1071,7 +1548,9 @@
                 { key: 'like', label: '点赞', icon: 'thumbs-up', red: redData.like || 0, blue: blueData.like || 0 },
                 { key: 'favorite', label: '收藏', icon: 'star', red: redData.favorite || 0, blue: blueData.favorite || 0 },
                 { key: 'share', label: '转发', icon: 'send', red: redData.share || 0, blue: blueData.share || 0 },
-                { key: 'coin', label: '投币', icon: 'coins', red: redData.coin || 0, blue: blueData.coin || 0 }
+                { key: 'coin', label: '投币', icon: 'coins', red: redData.coin || 0, blue: blueData.coin || 0 },
+                { key: 'danmaku', label: '弹幕', icon: 'message-square', red: redData.danmaku || 0, blue: blueData.danmaku || 0 },
+                { key: 'reply', label: '评论', icon: 'message-circle', red: redData.reply || 0, blue: blueData.reply || 0 }
             ];
             const maxValue = Math.max(...metrics.flatMap(metric => [metric.red, metric.blue]), 1);
 
@@ -1080,8 +1559,11 @@
                 const bluePct = Math.max(8, metric.blue / maxValue * 100);
                 return `
                     <div class="metric-row" aria-label="${metric.label}">
-                        <div class="metric-icon" title="${metric.label}" aria-hidden="true">
-                            <i data-lucide="${metric.icon}"></i>
+                        <div class="metric-label">
+                            <span class="metric-icon" title="${metric.label}" aria-hidden="true">
+                                <i data-lucide="${metric.icon}"></i>
+                            </span>
+                            <span>${metric.label}</span>
                         </div>
                         <div class="metric-bars">
                             ${metricBar('red', redPct, metric.red, 'assets/red-avatar.jpg')}
@@ -1113,8 +1595,10 @@
             if (viewChart) viewChart.resize();
         });
 
-        loadData();
-        setInterval(loadData, 5 * 60 * 1000);
+        initActions();
+        bootstrapData();
+        setInterval(loadRealtimeData, 60 * 1000);
+        setInterval(() => loadHistoryData({ updateLatest: !lastRealtimeOk }), 30 * 60 * 1000);
     </script>
 </body>
 </html>
