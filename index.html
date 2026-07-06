@@ -524,6 +524,10 @@
 
         .title-lockup h1 {
             margin: 0;
+            display: inline-grid;
+            grid-template-columns: auto auto auto;
+            align-items: center;
+            gap: 8px;
             font-size: clamp(22px, 2.45vw, 36px);
             line-height: 0.98;
             font-weight: 900;
@@ -994,16 +998,29 @@
             }
             .title-lockup {
                 grid-area: title;
-                justify-items: center;
+                width: 100%;
+                justify-items: stretch;
                 text-align: center;
                 align-self: center;
                 gap: 3px;
                 padding-bottom: 0;
             }
             .title-lockup h1 {
+                width: 100%;
+                grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+                gap: 6px;
                 font-size: clamp(16px, 4.4vw, 18px);
                 line-height: 1.05;
                 white-space: normal;
+            }
+            .title-lockup .team-name:first-child {
+                text-align: left;
+            }
+            .title-lockup .team-name:last-child {
+                text-align: right;
+            }
+            .title-lockup .versus {
+                text-align: center;
             }
             .diff-chip {
                 height: 24px;
@@ -1178,7 +1195,7 @@
                                     <div class="score-number red" id="redViews">--</div>
                                 </div>
                                 <div class="title-lockup">
-                                    <h1>大虾队 VS 雨哥队</h1>
+                                    <h1><span class="team-name">大虾队</span><span class="versus">VS</span><span class="team-name">雨哥队</span></h1>
                                 </div>
                                 <div class="score-side right">
                                     <div class="score-number blue" id="blueViews">--</div>
@@ -1385,13 +1402,17 @@
                 if (!window.html2canvas) throw new Error('html2canvas unavailable');
                 if (button) button.disabled = true;
 
-                const root = document.documentElement;
-                const canvas = await window.html2canvas(document.body, {
+                const captureTarget = document.querySelector('.page');
+                if (!captureTarget) throw new Error('page element missing');
+                const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+                const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+                const canvas = await window.html2canvas(captureTarget, {
                     backgroundColor: '#11110f',
-                    width: root.scrollWidth,
-                    height: root.scrollHeight,
-                    windowWidth: root.scrollWidth,
-                    windowHeight: root.scrollHeight,
+                    width: captureTarget.scrollWidth,
+                    height: captureTarget.scrollHeight,
+                    windowWidth: viewportWidth,
+                    windowHeight: viewportHeight,
                     scrollX: 0,
                     scrollY: 0,
                     scale: Math.min(window.devicePixelRatio || 1, 2),
@@ -1399,6 +1420,14 @@
                     onclone: clonedDoc => {
                         const clonedButton = clonedDoc.getElementById('copyImageBtn');
                         if (clonedButton) clonedButton.disabled = false;
+                        const clonedTopbar = clonedDoc.querySelector('.topbar');
+                        if (clonedTopbar) {
+                            clonedTopbar.style.position = 'absolute';
+                            clonedTopbar.style.top = '0';
+                            clonedTopbar.style.left = '0';
+                            clonedTopbar.style.right = '0';
+                            clonedTopbar.style.width = '100%';
+                        }
                     }
                 });
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
