@@ -535,6 +535,20 @@
             letter-spacing: 0;
         }
 
+        .team-lockup {
+            min-width: 0;
+            display: contents;
+        }
+
+        .team-lockup .watch-link {
+            display: none;
+        }
+
+        .team-name {
+            min-width: 0;
+            display: block;
+        }
+
         .diff-chip {
             height: 28px;
             display: inline-flex;
@@ -569,9 +583,9 @@
 
         .pk-head .diff-chip {
             position: absolute;
-            top: 50%;
+            top: calc(100% + 41px);
             left: var(--red-share);
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             white-space: nowrap;
             z-index: 4;
         }
@@ -834,7 +848,7 @@
         .metric-bar-line.blue-line .metric-tip img { border-color: var(--blue); }
 
         @media (max-width: 980px) {
-            .page { padding: 14px; }
+            .page { padding: 88px 14px 14px; }
             .hero-band {
                 --hero-shelf-height: 190px;
                 --hero-cover-overlap: 40px;
@@ -939,13 +953,47 @@
             .hero-band {
                 --hero-shelf-height: 158px;
                 --hero-cover-overlap: 62px;
+                --hero-mobile-cover-base-height: 117px;
+                --hero-mobile-cover-height: max(var(--hero-mobile-cover-base-height), 28.125vw);
+                --hero-mobile-visual-height: calc(var(--hero-mobile-cover-base-height) + var(--hero-image-tail-height));
                 width: 100%;
-                min-height: 382px;
+                min-height: var(--hero-mobile-visual-height);
                 border-radius: 0;
             }
+            .hero-band::before {
+                background:
+                    linear-gradient(180deg,
+                        rgba(17, 17, 15, 0) 0%,
+                        rgba(17, 17, 15, 0.08) 18%,
+                        rgba(17, 17, 15, 0.46) 38%,
+                        rgba(17, 17, 15, 0.84) 64%,
+                        rgba(17, 17, 15, 0.97) 84%,
+                        rgba(17, 17, 15, 1) 100%);
+                box-shadow: inset 0 0 46px 24px rgba(17, 17, 15, 0.56);
+            }
             .cover-layer {
+                bottom: auto;
+                height: var(--hero-mobile-cover-height);
                 grid-template-columns: 1fr 1fr;
                 grid-template-rows: none;
+            }
+            .cover-cell img {
+                object-position: center top;
+            }
+            .cover-blur-layer {
+                top: var(--hero-mobile-cover-height);
+                bottom: auto;
+                height: var(--hero-image-tail-height);
+                clip-path: none;
+            }
+            .cover-blur-cell {
+                overflow: hidden;
+            }
+            .cover-blur-cell img {
+                top: 0;
+                bottom: auto;
+                height: 100%;
+                transform-origin: center center;
             }
             .hero-band::after {
                 top: -10%;
@@ -963,11 +1011,11 @@
             .hero-info-shelf {
                 margin: 0 -12px;
                 padding: 10px 12px 12px;
+                align-content: end;
                 gap: 8px;
             }
             .hero-top {
-                grid-template-columns: 1fr 1fr;
-                gap: 6px;
+                display: none;
             }
             .avatar-chip {
                 width: 28px;
@@ -986,7 +1034,7 @@
                 gap: 4px 10px;
                 text-align: left;
                 margin-bottom: calc(var(--hero-cover-overlap) * -0.46);
-                transform: translateY(calc(var(--hero-cover-overlap) * -0.74));
+                transform: translateY(calc(var(--hero-cover-overlap) * -0.52));
             }
             .score-side {
                 grid-area: red;
@@ -1012,15 +1060,23 @@
                 font-size: clamp(16px, 4.4vw, 18px);
                 line-height: 1.05;
                 white-space: normal;
-            }
-            .title-lockup .team-name:first-child {
-                text-align: left;
-            }
-            .title-lockup .team-name:last-child {
-                text-align: right;
+                align-items: end;
             }
             .title-lockup .versus {
                 text-align: center;
+            }
+            .team-lockup {
+                display: inline-grid;
+                align-items: end;
+                gap: 4px;
+            }
+            .team-lockup.red {
+                justify-items: start;
+                text-align: left;
+            }
+            .team-lockup.blue {
+                justify-items: end;
+                text-align: right;
             }
             .diff-chip {
                 height: 24px;
@@ -1042,10 +1098,15 @@
                 padding-bottom: 0;
             }
             .pk-block {
+                display: grid;
+                grid-template-areas:
+                    "track"
+                    "head";
+                gap: 4px;
                 order: 0;
             }
             .pk-action-row .avatar-stack {
-                top: 25px;
+                top: -1px;
             }
             .pk-action-row .avatar-stack.red {
                 left: 4px;
@@ -1064,18 +1125,21 @@
                 width: 13px;
                 height: 13px;
             }
-            .hero-top .watch-link.red {
-                justify-self: start;
-            }
-            .hero-top .watch-link.blue {
-                justify-self: end;
+            .team-lockup .watch-link {
+                display: inline-flex;
             }
             .pk-head {
-                margin-bottom: 5px;
+                grid-area: head;
+                margin: 0;
                 height: 24px;
                 font-size: 12px;
             }
+            .pk-head .diff-chip {
+                top: 0;
+                transform: translateX(-50%);
+            }
             .pk-track {
+                grid-area: track;
                 height: 26px;
             }
             .pk-percent {
@@ -1195,7 +1259,17 @@
                                     <div class="score-number red" id="redViews">--</div>
                                 </div>
                                 <div class="title-lockup">
-                                    <h1><span class="team-name">大虾队</span><span class="versus">VS</span><span class="team-name">雨哥队</span></h1>
+                                    <h1>
+                                        <span class="team-lockup red">
+                                            <a class="watch-link red" href="https://www.bilibili.com/video/BV1zgTn6rEsh" target="_blank" rel="noreferrer"><i data-lucide="play" aria-hidden="true"></i><span>去看视频</span></a>
+                                            <span class="team-name">大虾队</span>
+                                        </span>
+                                        <span class="versus">VS</span>
+                                        <span class="team-lockup blue">
+                                            <a class="watch-link blue" href="https://www.bilibili.com/video/BV1UUTJ6dErS" target="_blank" rel="noreferrer"><i data-lucide="play" aria-hidden="true"></i><span>去看视频</span></a>
+                                            <span class="team-name">雨哥队</span>
+                                        </span>
+                                    </h1>
                                 </div>
                                 <div class="score-side right">
                                     <div class="score-number blue" id="blueViews">--</div>
