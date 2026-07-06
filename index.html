@@ -51,7 +51,7 @@
 
         .page {
             min-height: 100vh;
-            padding: 18px;
+            padding: 106px 18px 18px;
             display: flex;
             flex-direction: column;
             gap: 14px;
@@ -65,16 +65,24 @@
         }
 
         .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            width: 100%;
+            margin: 0;
             min-height: 74px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
             gap: 16px;
             border: 1px solid var(--line);
-            border-radius: 8px;
+            border-width: 0 0 1px;
+            border-radius: 0;
             background: rgba(24, 23, 19, 0.78);
             backdrop-filter: blur(18px);
-            padding: 9px 16px;
+            padding: 9px max(16px, calc((100vw - var(--content)) / 2 + 16px));
         }
 
         .top-meta {
@@ -878,7 +886,7 @@
 
         @media (max-width: 640px) {
             .page {
-                padding: 8px;
+                padding: 72px 8px 8px;
                 gap: 8px;
             }
             .topbar {
@@ -928,7 +936,7 @@
             }
             .hero-band {
                 --hero-shelf-height: 158px;
-                --hero-cover-overlap: 30px;
+                --hero-cover-overlap: 62px;
                 width: 100%;
                 min-height: 382px;
                 border-radius: 0;
@@ -967,13 +975,16 @@
                 margin-left: -7px;
             }
             .scoreboard {
-                grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
                 grid-template-areas:
-                    "red title blue";
+                    "title title"
+                    "red blue";
                 align-items: end;
                 align-content: end;
-                gap: 0 7px;
+                gap: 4px 10px;
                 text-align: left;
+                margin-bottom: calc(var(--hero-cover-overlap) * -0.46);
+                transform: translateY(calc(var(--hero-cover-overlap) * -0.74));
             }
             .score-side {
                 grid-area: red;
@@ -987,14 +998,14 @@
                 grid-area: title;
                 justify-items: center;
                 text-align: center;
-                align-self: end;
-                gap: 0;
-                padding-bottom: 1px;
+                align-self: center;
+                gap: 3px;
+                padding-bottom: 0;
             }
             .title-lockup h1 {
-                font-size: clamp(15px, 4.2vw, 17px);
-                line-height: 0.95;
-                white-space: nowrap;
+                font-size: clamp(16px, 4.4vw, 18px);
+                line-height: 1.05;
+                white-space: normal;
             }
             .diff-chip {
                 height: 24px;
