@@ -121,6 +121,11 @@
             background: rgba(230, 199, 95, 0.1);
         }
 
+        .icon-action:disabled {
+            cursor: progress;
+            opacity: 0.62;
+        }
+
         .icon-action.is-error {
             color: var(--pink);
             border-color: rgba(228, 90, 104, 0.38);
@@ -442,13 +447,6 @@
 
         .score-side.right {
             text-align: right;
-        }
-
-        .up-name {
-            color: var(--muted);
-            font-size: 13px;
-            font-weight: 700;
-            margin-bottom: 8px;
         }
 
         .score-number {
@@ -1012,10 +1010,6 @@
                 padding: 0 7px;
                 font-size: 10px;
             }
-            .up-name {
-                font-size: 10px;
-                margin-bottom: 3px;
-            }
             .score-number {
                 font-size: clamp(29px, 8.1vw, 32px);
             }
@@ -1138,7 +1132,7 @@
             <div class="top-meta">
                 <span id="topTime">等待数据</span>
                 <div class="top-actions" aria-label="页面操作">
-                    <button class="icon-action" id="copyImageBtn" type="button" title="复制页面为图片到剪切板" aria-label="复制页面为图片到剪切板">
+                    <button class="icon-action" id="copyImageBtn" type="button" title="保存整页截图" aria-label="保存整页截图">
                         <i data-lucide="image" aria-hidden="true"></i>
                     </button>
                     <button class="icon-action" id="sharePageBtn" type="button" title="分享本页面" aria-label="分享本页面">
@@ -1181,14 +1175,12 @@
                         <div class="hero-info-shelf">
                             <div class="scoreboard">
                                 <div class="score-side">
-                                    <div class="up-name" id="redUpName">徐大虾咯</div>
                                     <div class="score-number red" id="redViews">--</div>
                                 </div>
                                 <div class="title-lockup">
                                     <h1>大虾队 VS 雨哥队</h1>
                                 </div>
                                 <div class="score-side right">
-                                    <div class="up-name" id="blueUpName">雨哥到处跑</div>
                                     <div class="score-number blue" id="blueViews">--</div>
                                 </div>
                             </div>
@@ -1375,31 +1367,50 @@
             window.setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
-        async function copyPageImage() {
+        function screenshotFilename() {
+            const now = new Date();
+            const stamp = [
+                now.getFullYear(),
+                String(now.getMonth() + 1).padStart(2, '0'),
+                String(now.getDate()).padStart(2, '0'),
+                String(now.getHours()).padStart(2, '0'),
+                String(now.getMinutes()).padStart(2, '0')
+            ].join('');
+            return `bilibili-pk-dashboard-${stamp}.png`;
+        }
+
+        async function saveFullPageImage() {
             const button = document.getElementById('copyImageBtn');
             try {
                 if (!window.html2canvas) throw new Error('html2canvas unavailable');
-                const canvas = await window.html2canvas(document.querySelector('.page'), {
+                if (button) button.disabled = true;
+
+                const root = document.documentElement;
+                const canvas = await window.html2canvas(document.body, {
                     backgroundColor: '#11110f',
+                    width: root.scrollWidth,
+                    height: root.scrollHeight,
+                    windowWidth: root.scrollWidth,
+                    windowHeight: root.scrollHeight,
+                    scrollX: 0,
+                    scrollY: 0,
                     scale: Math.min(window.devicePixelRatio || 1, 2),
-                    useCORS: true
+                    useCORS: true,
+                    onclone: clonedDoc => {
+                        const clonedButton = clonedDoc.getElementById('copyImageBtn');
+                        if (clonedButton) clonedButton.disabled = false;
+                    }
                 });
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                 if (!blob) throw new Error('image render failed');
 
-                if (navigator.clipboard && window.ClipboardItem) {
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ 'image/png': blob })
-                    ]);
-                    flashAction(button);
-                    return;
-                }
-
-                downloadBlob(blob, 'bilibili-pk-dashboard.png');
+                downloadBlob(blob, screenshotFilename());
                 flashAction(button);
             } catch (error) {
-                console.warn('copy image failed', error);
-                markActionError(button, '复制失败，请用本地服务或 HTTPS 打开');
+                console.warn('save image failed', error);
+                markActionError(button, '保存失败，请用本地服务或 HTTPS 打开');
+            } finally {
+                if (button) button.disabled = false;
             }
         }
 
@@ -1429,7 +1440,7 @@
         function initActions() {
             const copyButton = document.getElementById('copyImageBtn');
             const shareButton = document.getElementById('sharePageBtn');
-            if (copyButton) copyButton.addEventListener('click', copyPageImage);
+            if (copyButton) copyButton.addEventListener('click', saveFullPageImage);
             if (shareButton) shareButton.addEventListener('click', sharePage);
             if (window.lucide) window.lucide.createIcons();
         }
