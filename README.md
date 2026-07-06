@@ -6,9 +6,9 @@ B站视频PK数据实时对比看板。当前追踪的是《流量王01》系列
 
 ```
 ├── crawler.py       # 数据采集脚本，调用B站公开API，每30分钟跑一次
-├── data.json        # 采集到的快照数据（时间序列）
-├── data.js          # data.json 的 JS 包装版，支持 file:// 直接打开
-├── index.html       # 前端页面，ECharts图表，读取data.json/data.js渲染
+├── data.jsonl       # 采集到的快照数据（JSON Lines，每行一个快照）
+├── data.js          # append-only 的 JS 包装版，支持 file:// 直接打开
+├── index.html       # 前端页面，ECharts图表，读取data.jsonl/data.js渲染
 └── assets/          # 视频封面和UP主头像
     ├── red-cover.jpg       # 大虾队视频封面
     ├── blue-cover.jpg      # 雨哥队视频封面
@@ -37,9 +37,28 @@ B站视频PK数据实时对比看板。当前追踪的是《流量王01》系列
 
 Cron job ID: `74c816300831`，每30分钟执行一次，deliver=local。
 
+历史数据使用 JSON Lines：
+
+```jsonl
+{"ts":1783194485,"time":"2026-07-05T03:48:05","videos":{...}}
+{"ts":1783200000,"time":"2026-07-05T05:20:00","videos":{...}}
+```
+
+`data.jsonl` 和 `data.js` 都是 append-only 文件，并在 `.gitattributes` 中使用 `merge=union`，用于降低本地 cron 和 GitHub Actions 同时追加数据时的 Git 冲突概率。本地定时任务推荐流程：
+
+```bash
+git pull --rebase origin main
+python3 crawler.py
+git add data.jsonl data.js
+git diff --cached --quiet && exit 0
+git commit -m "chore: update bilibili data"
+git pull --rebase origin main
+git push origin HEAD:main
+```
+
 ## 前端
 
-纯静态HTML + ECharts，无构建步骤。直接双击打开 `index.html` 时，页面会用 `data.js` 渲染播放趋势；通过 HTTP 访问时优先读取 `data.json`。
+纯静态HTML + ECharts，无构建步骤。直接双击打开 `index.html` 时，页面会用 `data.js` 渲染播放趋势；通过 HTTP 访问时优先读取 `data.jsonl`。
 
 本地预览：
 
@@ -49,11 +68,11 @@ python3 -m http.server 9926
 # 访问 http://localhost:9926
 ```
 
-页面会定期刷新实时数据；历史播放趋势来自 `data.json`，静态直开时回退到 `data.js`。
+页面会定期刷新实时数据；历史播放趋势来自 `data.jsonl`，静态直开时回退到 `data.js`。
 
 ## 部署
 
-页面仍然是纯静态文件，动态数据由 GitHub Actions 每30分钟运行 `crawler.py` 更新 `data.json` 并推回仓库。发布平台只需要支持“Git 仓库部署 + 自定义构建命令 + 静态目录输出”。
+页面仍然是纯静态文件，动态数据由 GitHub Actions 每30分钟运行 `crawler.py` 更新 `data.jsonl` 和 `data.js` 并推回仓库。发布平台只需要支持“Git 仓库部署 + 自定义构建命令 + 静态目录输出”。
 
 如果主要给国内用户访问，优先用腾讯 EdgeOne Pages；如果只是快速给少量人试用，也可以用 Cloudflare Pages。两者都可以复用同一套构建配置：
 
@@ -66,7 +85,7 @@ python3 -m http.server 9926
 2. 在 EdgeOne Pages / Makers 控制台连接 GitHub 仓库。
 3. 设置构建命令和输出目录为上面的 `bash scripts/build-site.sh` / `dist`。
 4. 第一次发布后会得到平台分配的访问地址，可以直接发给别人访问。
-5. 到 GitHub `Actions` 手动运行一次 `Update Bilibili data`，之后会每30分钟自动采集；每次 `data.json` 被提交后，平台会自动重新发布。
+5. 到 GitHub `Actions` 手动运行一次 `Update Bilibili data`，之后会每30分钟自动采集；每次 `data.jsonl` 被提交后，平台会自动重新发布。
 
 ### Cloudflare Pages（海外/通用）
 
@@ -79,9 +98,9 @@ python3 -m http.server 9926
    - Build command: `bash scripts/build-site.sh`
    - Build output directory: `dist`
 4. 第一次发布后会得到一个 `*.pages.dev` 地址，可以直接发给别人访问。
-5. 到 GitHub `Actions` 手动运行一次 `Update Bilibili data`，之后会每30分钟自动采集；每次 `data.json` 被提交后，Cloudflare Pages 会自动重新发布。
+5. 到 GitHub `Actions` 手动运行一次 `Update Bilibili data`，之后会每30分钟自动采集；每次 `data.jsonl` 被提交后，Cloudflare Pages 会自动重新发布。
 
-发布内容只包含 `index.html`、`data.json`、`data.js` 和 `assets/`，不会把采集脚本作为网页文件发布出去。
+发布内容只包含 `index.html`、`data.jsonl`、`data.js` 和 `assets/`，不会把采集脚本作为网页文件发布出去。
 
 ## 团队背景
 

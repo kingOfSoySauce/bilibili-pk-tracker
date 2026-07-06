@@ -1130,7 +1130,7 @@
     </div>
 
     <script>
-        const DATA_URL = './data.json';
+        const DATA_URL = './data.jsonl';
         const BILI_API_URL = 'https://api.bilibili.com/x/web-interface/view?bvid=';
         const RED = '#ff2d55';
         const BLUE = '#5ac8fa';
@@ -1143,10 +1143,34 @@
         let historySnapshots = [];
         let lastRealtimeOk = false;
 
+        function normalizeSnapshots(snapshots) {
+            const byKey = new Map();
+            (snapshots || []).forEach(snapshot => {
+                if (!snapshot || !snapshot.time || !snapshot.videos) return;
+                const key = `${snapshot.ts || ''}|${snapshot.time}`;
+                byKey.set(key, snapshot);
+            });
+            return Array.from(byKey.values()).sort((a, b) => {
+                const aTs = Number(a.ts) || new Date(a.time).getTime() / 1000 || 0;
+                const bTs = Number(b.ts) || new Date(b.time).getTime() / 1000 || 0;
+                return aTs - bTs || String(a.time).localeCompare(String(b.time));
+            });
+        }
+
+        function parseJsonlHistory(text) {
+            const snapshots = text
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(Boolean)
+                .map(line => JSON.parse(line));
+            return { snapshots: normalizeSnapshots(snapshots) };
+        }
+
         function getBundledHistoryData() {
-            return window.BILI_PK_DATA && Array.isArray(window.BILI_PK_DATA.snapshots)
-                ? window.BILI_PK_DATA
-                : null;
+            const snapshots = window.BILI_PK_DATA && Array.isArray(window.BILI_PK_DATA.snapshots)
+                ? normalizeSnapshots(window.BILI_PK_DATA.snapshots)
+                : [];
+            return snapshots.length ? { snapshots } : null;
         }
 
         function fmt(n) {
@@ -1416,8 +1440,8 @@
             let data;
             try {
                 const response = await fetch(DATA_URL + '?t=' + Date.now());
-                if (!response.ok) throw new Error(`data.json HTTP ${response.status}`);
-                data = await response.json();
+                if (!response.ok) throw new Error(`data.jsonl HTTP ${response.status}`);
+                data = parseJsonlHistory(await response.text());
             } catch (error) {
                 data = getBundledHistoryData();
                 if (!data) {

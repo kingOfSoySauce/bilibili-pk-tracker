@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Bilibili PK 视频数据采集器
-每30分钟抓取一次两个视频的播放量等数据，存入 data.json
+每30分钟抓取一次两个视频的播放量等数据，追加到 data.jsonl
 """
 
 import json
@@ -11,8 +11,9 @@ import urllib.request
 import urllib.error
 from datetime import datetime
 
-DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.json")
+DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.jsonl")
 DATA_JS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.js")
+DATA_JS_HEADER = "window.BILI_PK_DATA = window.BILI_PK_DATA || { snapshots: [] };\n"
 
 VIDEOS = [
     {
@@ -34,25 +35,29 @@ HEADERS = {
 }
 
 
-def load_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {"snapshots": [], "meta": {"created": now_iso()}}
+def count_snapshots():
+    if not os.path.exists(DATA_FILE):
+        return 0
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        return sum(1 for line in f if line.strip())
 
 
-def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    save_data_js(data)
-
-
-def save_data_js(data):
-    payload = json.dumps(data, ensure_ascii=False, indent=2)
-    with open(DATA_JS_FILE, "w", encoding="utf-8") as f:
-        f.write("window.BILI_PK_DATA = ")
+def append_snapshot(snapshot):
+    payload = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
+    with open(DATA_FILE, "a", encoding="utf-8") as f:
         f.write(payload)
-        f.write(";\n")
+        f.write("\n")
+    append_data_js(payload)
+
+
+def append_data_js(payload):
+    needs_header = not os.path.exists(DATA_JS_FILE) or os.path.getsize(DATA_JS_FILE) == 0
+    with open(DATA_JS_FILE, "a", encoding="utf-8") as f:
+        if needs_header:
+            f.write(DATA_JS_HEADER)
+        f.write("window.BILI_PK_DATA.snapshots.push(")
+        f.write(payload)
+        f.write(");\n")
 
 
 def now_iso():
@@ -84,7 +89,6 @@ def fetch_video(bvid):
 
 
 def main():
-    data = load_data()
     ts = int(time.time())
     now = now_iso()
     print(f"[{now}] 开始采集...")
@@ -97,15 +101,6 @@ def main():
             info = fetch_video(v["bvid"])
             snapshot["videos"][v["label"]] = info
             print(f"  {v['label']}({v['up']}): {info['view']:,} 播放 | {info['like']:,} 点赞 | {info['coin']:,} 投币")
-
-            # 保存meta信息（只在第一次写入）
-            if v["label"] not in data.get("meta", {}).get("videos", {}):
-                data.setdefault("meta", {}).setdefault("videos", {})[v["label"]] = {
-                    "bvid": v["bvid"],
-                    "title": info["title"],
-                    "up": info["up"],
-                    "pubdate": info["pubdate"],
-                }
         except Exception as e:
             print(f"  {v['label']} 采集失败: {e}")
             errors.append(f"{v['label']}: {e}")
@@ -116,9 +111,8 @@ def main():
         print("  采集未完整成功，跳过写入，避免页面展示错误快照")
         raise SystemExit(1)
 
-    data["snapshots"].append(snapshot)
-    save_data(data)
-    print(f"  已保存，共 {len(data['snapshots'])} 条快照")
+    append_snapshot(snapshot)
+    print(f"  已保存，共 {count_snapshots()} 条快照")
 
 
 if __name__ == "__main__":
